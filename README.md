@@ -13,9 +13,9 @@
 - internal
 - vendor
 
-(if not golang)
-- Dockerfile
-- Makefile: vendor, fmt, lint 
+## Gitlab Configurations
+
+CICD Variables: GITLAB_API_TOKEN, GITLAB_PRODUCTION_OKD_TOKEN, GITLAB_STAGING_OKD_TOKEN
 
 ## Development
 
