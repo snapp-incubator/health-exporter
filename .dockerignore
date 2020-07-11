@@ -1,0 +1,12 @@
+vendor
+.gitlab-ci.yml
+.idea
+.git
+.gitignore
+Dockerfile
+.dockerignore
+README.md
+docker-compose.yml
+bin
+Makefile
+okd.yml

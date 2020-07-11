@@ -1,0 +1,9 @@
+version: "2.0"
+
+services:
+  gitlab-webhook:
+    image: ${IMAGE}
+    env_file:
+      - .env
+    ports:
+      - 8081:8080

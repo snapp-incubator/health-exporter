@@ -1,0 +1,7 @@
+stages:
+  - syntax
+
+syntax-check:
+  stage: syntax
+  script:
+    - ./test/syntax.sh
