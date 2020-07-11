@@ -4,9 +4,9 @@ parameters:
   - name: PROJECT_NAME
     value: health_exporter
   - name: ROUTE_NAME
-    value: ${PROJECT_NAME}.apps.private.${REGION}.snappcloud.io
+    value: health_exporter.apps.private.teh-1.snappcloud.io
   - name: GIT_URL
-    value: 
+    value: git@gitlab.snapp.ir:snappcloud/health_exporter.git
   - name: DAEMON_PORT
     value: 8080
 
