@@ -121,5 +121,3 @@ sanity-check:
   only:
     refs:
       - master
-
-      CI_COMMIT_REF_NAME
