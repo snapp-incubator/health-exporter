@@ -1,33 +1,70 @@
-image: golang:1.14-alpine
-
 stages:
- - lint
  - test
+ - build
+ - push
 
-lint_base:
-   stage: lint
-   script:
-     - echo "lint stage is done!"
-   
-test_base:
-   stage: test
-   script:
-     - echo "test stage is done!"
+default:
+  image: golang:1.14
+  before_script:
+    - go env -w GOPROXY="https://repo.snapp.tech/repository/goproxy/"
+    - go mod download
 
-#before_script:
-#  - go mod download # needs proxy to run
-#
-#go_fmt:
-#  stage: lint
-#  script:
-#    - go fmt ./...
-#
-#go_vet:
-#  stage: lint
-#  script:
-#    - go vet ./...
-#
-#unit_tests:
-#  stage: test
-#  script:
-#    - go test -v ./... -coverprofile .testCoverage.txt
+go_fmt:
+  stage: test
+  script:
+    - go fmt ./...
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+      when: on_success
+
+go_vet:
+  stage: test
+  script:
+    - go vet ./...
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+      when: on_success
+
+unit_tests:
+  stage: test
+  script:
+    - go test -race -v ./... -coverprofile .testCoverage.txt
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+      when: on_success
+
+build:
+  stage: build
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+    - whoami
+  script:
+    - docker build --cache-from $CI_REGISTRY_IMAGE:latest
+      --tag $CI_REGISTRY_IMAGE:latest .
+  retry:
+    max: 2
+    when: runner_system_failure
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+      when: on_success
+
+push:
+  stage: push
+  image: docker:stable
+  services:
+    - docker:dind
+  before_script:
+    - whoami
+  script:
+    - docker build --cache-from docker.io/$DOCKERHUB_USER/$CI_PROJECT_NAME:latest
+      --tag $CI_REGISTRY_IMAGE:latest .
+    - docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
+    - docker push docker.io/$DOCKERHUB_USER/$CI_PROJECT_NAME:latest
+  retry:
+    max: 2
+    when: runner_system_failure
+  rules:
+    - if: $CI_COMMIT_REF_NAME == "master"
+      when: on_success
