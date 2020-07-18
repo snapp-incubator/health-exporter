@@ -1,0 +1,13 @@
+listen: ':9876'
+targets:
+  http:
+    - name: 'google'
+      url: 'https://www.google.com/'
+      rps: 0.5 # 2 RPS
+      timeout: '1s'
+    - name: 'kubernetes-internal'
+      url: 'http://kubernetes.default.svc'
+      rps: 2.0
+      timeout: '1s'
+      tls_skip_verify: true
+
