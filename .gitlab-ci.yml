@@ -1,0 +1,33 @@
+image: golang:1.14-alpine
+
+stages:
+ - lint
+ - test
+
+lint_base:
+   stage: lint
+   script:
+     - echo "lint stage is done!"
+   
+test_base:
+   stage: test
+   script:
+     - echo "test stage is done!"
+
+#before_script:
+#  - go mod download # needs proxy to run
+#
+#go_fmt:
+#  stage: lint
+#  script:
+#    - go fmt ./...
+#
+#go_vet:
+#  stage: lint
+#  script:
+#    - go vet ./...
+#
+#unit_tests:
+#  stage: test
+#  script:
+#    - go test -v ./... -coverprofile .testCoverage.txt
