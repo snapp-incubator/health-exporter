@@ -24,7 +24,7 @@ var (
 		prometheus.HistogramOpts{
 			Name:    "health_http_duration_seconds",
 			Help:    "The response time of http requests",
-			Buckets: []float64{0.001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.2, 0.5, 0.75, 1},
+			Buckets: []float64{0.001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.2, 0.5, 0.75, 1, 1.5, 2},
 		},
 		[]string{"name", "status_code", "result", "url"},
 	)
