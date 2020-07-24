@@ -59,7 +59,7 @@ push:
     - whoami
   script:
     - docker build --cache-from docker.io/$DOCKERHUB_USER/$CI_PROJECT_NAME:latest
-      --tag $CI_REGISTRY_IMAGE:latest .
+      --tag docker.io/$DOCKERHUB_USER/$CI_PROJECT_NAME:latest .
     - docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
     - docker push docker.io/$DOCKERHUB_USER/$CI_PROJECT_NAME:latest
   retry:
