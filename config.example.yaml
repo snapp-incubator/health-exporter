@@ -10,4 +10,17 @@ targets:
       rps: 2.0
       timeout: '1s'
       tls_skip_verify: true
+  dns:
+    - name: 'google'
+      domain: 'google.com'
+      record_type: 'A'
+      rps: 1.0
+      timeout: '2s'
+    - name: 'health-be-svc'
+      domain: 'health-be.monitoring.svc.cluster.local'
+      record_type: 'A'
+      rps: 1.0
+      timeout: '2s'
+
+
 
