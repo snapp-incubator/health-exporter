@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 var config Config
@@ -38,6 +39,7 @@ type Config struct {
 
 type Target struct {
 	HTTP []HTTP `mapstructure:"http"`
+	DNS  []DNS  `mapstructure:"dns"`
 }
 
 type HTTP struct {
@@ -46,4 +48,12 @@ type HTTP struct {
 	RPS           float64       `mapstructure:"rps"`
 	Timeout       time.Duration `mapstructure:"timeout"`
 	TLSSkipVerify bool          `mapstructure:"tls_skip_verify"`
+}
+
+type DNS struct {
+	Name       string        `mapstructure:"name"`
+	Domain     string        `mapstructure:"domain"`
+	RecordType string        `mapstructure:"record_type"`
+	RPS        float64       `mapstructure:"rps"`
+	Timeout    time.Duration `mapstructure:"timeout"`
 }

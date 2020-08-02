@@ -1,6 +1,6 @@
 **Objective:** <MR-OBJECTIVE>
 
-**Task:** Closes CLD-<X>
+**Task:** CLD-<X>
 
 **Status:**
 * [ ] Tested in Staging
