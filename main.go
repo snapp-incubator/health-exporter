@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"gitlab.snapp.ir/snappcloud/health_exporter/config"
 	"gitlab.snapp.ir/snappcloud/health_exporter/prober"
 )
@@ -17,6 +18,7 @@ func init() {
 	flag.StringVar(&configPath, "config", "config.yaml", "Path of config file")
 	flag.Parse()
 }
+
 
 func main() {
 
@@ -45,6 +47,18 @@ func main() {
 			d.Name, d.Domain, d.RecordType, d.RPS, d.Timeout)
 		go dnsProber.Start(ctx)
 	}
+	if config.Get().Targets.K8S.Enabled {
+		log.Printf("K8S Prober is Enabled")
+		k8s_client := prober.Getk8sClient()
+		for _, sp := range config.Get().Targets.K8S.SimpleProbe {
+			k8s_simpeProber := prober.NewSimpleProbe(k8s_client, sp.NameSpace, sp.RPS)
+			log.Printf("Probing K8S target namespace '%s', RPS: 1.0 ...\n",
+				sp.NameSpace)
+			go k8s_simpeProber.Start(ctx)
+		}
+	} else {log.Printf("K8S Prober is Disabled")}
+	
+	
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())

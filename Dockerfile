@@ -1,5 +1,6 @@
 #build stage
 FROM golang:1.14-alpine AS builder
+RUN mkdir -p /go/src/app
 WORKDIR /go/src/app
 RUN apk add --no-cache git
 
