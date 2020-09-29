@@ -45,7 +45,7 @@ func NewDNS(name string, domain string, recordType string, rps float64, timeout 
 		Name:       name,
 		Domain:     domain,
 		RecordType: recordType,
-		RPS:        rps,
+		RPS: rps,
 		Client:     c,
 	}
 }

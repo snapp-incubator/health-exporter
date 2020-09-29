@@ -21,6 +21,11 @@ targets:
       record_type: 'A'
       rps: 1.0
       timeout: '2s'
+  k8s:
+    enabled: false
+    simple-probe:
+      - namespace: monitoring
+        rps: 1.0
 
 
 
