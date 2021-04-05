@@ -3,13 +3,14 @@ package prober
 import (
 	"context"
 	"crypto/tls"
-	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"net"
 	"net/http"
 	url2 "net/url"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -36,7 +37,7 @@ func init() {
 	prometheus.MustRegister(httpDurations)
 }
 
-func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify bool) HTTP {
+func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify bool, host string) HTTP {
 	client := &http.Client{
 		Timeout: timeout,
 	}
@@ -53,6 +54,7 @@ func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSki
 		URL:    url,
 		RPS:    rps,
 		Client: client,
+		Host:   host,
 	}
 }
 
@@ -67,6 +69,7 @@ type HTTP struct {
 	Name   string
 	URL    string
 	RPS    float64
+	Host   string
 	Client *http.Client
 	ticker *time.Ticker
 }
@@ -121,7 +124,9 @@ func (h *HTTP) calculateInterval() time.Duration {
 
 func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, h.URL, nil)
-
+	if h.Host != "" {
+		req.Host = h.Host
+	}
 	start := time.Now()
 	res, err := h.Client.Do(req)
 	responseTime := time.Since(start).Seconds()

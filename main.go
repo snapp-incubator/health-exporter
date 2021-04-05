@@ -19,7 +19,6 @@ func init() {
 	flag.Parse()
 }
 
-
 func main() {
 
 	err := config.Read(configPath)
@@ -33,7 +32,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for _, ht := range config.Get().Targets.HTTP {
-		httpProber := prober.NewHttp(ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify)
+		httpProber := prober.NewHttp(ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify, ht.Host)
 
 		log.Printf("Probing HTTP target '%s' with url '%s', RPS: %.2f, timeout: %s, TLS_skip_verify: %v ...\n",
 			ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify)
@@ -56,9 +55,9 @@ func main() {
 				sp.NameSpace)
 			go k8s_simpeProber.Start(ctx)
 		}
-	} else {log.Printf("K8S Prober is Disabled")}
-	
-	
+	} else {
+		log.Printf("K8S Prober is Disabled")
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
