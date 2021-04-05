@@ -10,6 +10,11 @@ targets:
       rps: 2.0
       timeout: '1s'
       tls_skip_verify: true
+    - name: 'host-header'
+      url: http://apps.private.okd4.teh-1.snappcloud.io
+      rps: 1.0
+      timeout: '3s'
+      host: health-be.apps.private.okd4.teh-1.snappcloud.io
   dns:
     - name: 'google'
       domain: 'google.com'

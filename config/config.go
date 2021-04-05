@@ -40,7 +40,7 @@ type Config struct {
 type Target struct {
 	HTTP []HTTP `mapstructure:"http"`
 	DNS  []DNS  `mapstructure:"dns"`
-	K8S K8S `mapstructure:"k8s"`
+	K8S  K8S    `mapstructure:"k8s"`
 }
 
 type HTTP struct {
@@ -49,6 +49,7 @@ type HTTP struct {
 	RPS           float64       `mapstructure:"rps"`
 	Timeout       time.Duration `mapstructure:"timeout"`
 	TLSSkipVerify bool          `mapstructure:"tls_skip_verify"`
+	Host          string        `mapstructure:"host"`
 }
 
 type DNS struct {
@@ -60,11 +61,11 @@ type DNS struct {
 }
 
 type K8S struct {
-	Enabled bool `mapstructure:"enabled"`
+	Enabled     bool              `mapstructure:"enabled"`
 	SimpleProbe []K8S_SimpleProbe `mapstructure:"simple-probe"`
 }
 
 type K8S_SimpleProbe struct {
-	NameSpace string `mapstructure:"namespace"`
-	RPS        float64       `mapstructure:"rps"`
+	NameSpace string  `mapstructure:"namespace"`
+	RPS       float64 `mapstructure:"rps"`
 }
