@@ -16,9 +16,10 @@ FROM debian:buster-slim
 ENV TZ=UTC \
     PATH="/app:${PATH}"
 
-RUN mkdir -p /var/log && \
-    chgrp -R 0 /var/log && \
-    chmod -R g=u /var/log
+RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
 
 WORKDIR /app
 
