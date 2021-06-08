@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: '{{ template "health_exporter.fullname" . }}'
+  namespace: '{{ .Release.Namespace }}'
+data:
+  config.yaml: |
+    {{- toYaml .Values.config | default "{}" | nindent 4 }}
