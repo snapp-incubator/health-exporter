@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"gitlab.snapp.ir/snappcloud/health_exporter/config"
@@ -40,10 +41,17 @@ func main() {
 	}
 
 	for _, d := range config.Get().Targets.DNS {
-		dnsProber := prober.NewDNS(d.Name, d.Domain, d.RecordType, d.RPS, d.Timeout)
+		if d.ServerIP == "" {
+			config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
+			d.ServerIP = config.Servers[0]
+		}
+		if d.ServerPort == 0 {
+			d.ServerPort = 53
+		}
+		dnsProber := prober.NewDNS(d.Name, d.Domain, d.RecordType, d.RPS, d.ServerIP, d.ServerPort, d.Timeout)
 
-		log.Printf("Probing DNS target '%s' with domain '%s', RecordType: %s, RPS: %.2f, timeout: %s ...\n",
-			d.Name, d.Domain, d.RecordType, d.RPS, d.Timeout)
+		log.Printf("Probing DNS target '%s' with domain '%s', RecordType: %s, RPS: %.2f, server: %s, port: %v, timeout: %s ...\n",
+			d.Name, d.Domain, d.RecordType, d.RPS, d.ServerIP, d.ServerPort, d.Timeout)
 		go dnsProber.Start(ctx)
 	}
 	if config.Get().Targets.K8S.Enabled {
