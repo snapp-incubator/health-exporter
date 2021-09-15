@@ -57,6 +57,8 @@ type DNS struct {
 	Domain     string        `mapstructure:"domain"`
 	RecordType string        `mapstructure:"record_type"`
 	RPS        float64       `mapstructure:"rps"`
+	ServerIP   string        `mapstructure:"server_ip"`
+	ServerPort int           `mapstructure:"server_port"`
 	Timeout    time.Duration `mapstructure:"timeout"`
 }
 

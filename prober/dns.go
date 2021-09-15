@@ -36,7 +36,7 @@ func init() {
 	prometheus.MustRegister(dnsDurations)
 }
 
-func NewDNS(name string, domain string, recordType string, rps float64, timeout time.Duration) DNS {
+func NewDNS(name string, domain string, recordType string, rps float64, serverIP string, serverPort int, timeout time.Duration) DNS {
 	c := &dns.Client{
 		Timeout: timeout,
 	}
@@ -45,7 +45,9 @@ func NewDNS(name string, domain string, recordType string, rps float64, timeout 
 		Name:       name,
 		Domain:     domain,
 		RecordType: recordType,
-		RPS: rps,
+		RPS:        rps,
+		ServerIP:   serverIP,
+		ServerPort: serverPort,
 		Client:     c,
 	}
 }
@@ -63,6 +65,8 @@ type DNS struct {
 	Domain     string
 	RPS        float64
 	RecordType string
+	ServerIP   string
+	ServerPort int
 	Client     *dns.Client
 	ticker     *time.Ticker
 }
@@ -119,8 +123,7 @@ func (d *DNS) sendRequest(ctx context.Context) DNSResult {
 	m.SetQuestion(dns.Fqdn(d.Domain), recordType)
 	m.RecursionDesired = true
 
-	config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
-	r, rtt, err := d.Client.ExchangeContext(ctx, m, net.JoinHostPort(config.Servers[0], "53"))
+	r, rtt, err := d.Client.ExchangeContext(ctx, m, net.JoinHostPort(d.ServerIP, strconv.Itoa(d.ServerPort)))
 	ResponseTime := float64(rtt.Milliseconds()) / 1e3
 	if err != nil {
 		return DNSResult{
@@ -135,7 +138,7 @@ func (d *DNS) sendRequest(ctx context.Context) DNSResult {
 			RCodeValue:   r.Rcode,
 			RCode:        dns.RcodeToString[r.Rcode],
 			Result:       "error",
-			Error:        fmt.Errorf("Invalid answer (%s) after %s query for %s", dns.RcodeToString[r.Rcode], d.RecordType, d.Domain),
+			Error:        fmt.Errorf("invalid answer (%s) after %s query for %s", dns.RcodeToString[r.Rcode], d.RecordType, d.Domain),
 		}
 	} else {
 		return DNSResult{

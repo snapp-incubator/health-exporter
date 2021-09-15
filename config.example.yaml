@@ -26,6 +26,8 @@ targets:
       record_type: 'A'
       rps: 1.0
       timeout: '2s'
+      server_ip: 8.8.8.8
+      server_port: 53
   k8s:
     enabled: false
     simple-probe:
