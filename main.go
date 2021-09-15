@@ -50,8 +50,8 @@ func main() {
 		}
 		dnsProber := prober.NewDNS(d.Name, d.Domain, d.RecordType, d.RPS, d.ServerIP, d.ServerPort, d.Timeout)
 
-		log.Printf("Probing DNS target '%s' with domain '%s', RecordType: %s, RPS: %.2f, timeout: %s ...\n",
-			d.Name, d.Domain, d.RecordType, d.RPS, d.Timeout)
+		log.Printf("Probing DNS target '%s' with domain '%s', RecordType: %s, RPS: %.2f, server: %s, port: %v, timeout: %s ...\n",
+			d.Name, d.Domain, d.RecordType, d.RPS, d.ServerIP, d.ServerPort, d.Timeout)
 		go dnsProber.Start(ctx)
 	}
 	if config.Get().Targets.K8S.Enabled {
