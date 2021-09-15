@@ -18,9 +18,9 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/client-go/tools/metrics"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/metrics"
 )
 
 var (
@@ -28,8 +28,8 @@ var (
 	clientGoRequestResultMetricVec = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			// Namespace: metricsNamespace,
-			Name:      "health_k8s_http_request_total",
-			Help:      "Total number of HTTP requests to the Kubernetes API by status code.",
+			Name: "health_k8s_http_request_total",
+			Help: "Total number of HTTP requests to the Kubernetes API by status code.",
 		},
 		[]string{"status_code"},
 	)
@@ -43,14 +43,6 @@ var (
 		[]string{"endpoint"},
 	)
 )
-
-// Definition of dummy metric used as a placeholder if we don't want to observe some data.
-type noopMetric struct{}
-
-func (noopMetric) Inc()            {}
-func (noopMetric) Dec()            {}
-func (noopMetric) Observe(float64) {}
-func (noopMetric) Set(float64)     {}
 
 // Definition of client-go metrics adapters for HTTP requests observation
 type clientGoRequestMetricAdapter struct{}
@@ -78,7 +70,7 @@ func init() {
 	(&clientGoRequestMetricAdapter{}).Register(prometheus.DefaultRegisterer)
 }
 
-func Getk8sClient() (*kubernetes.Clientset) {
+func Getk8sClient() *kubernetes.Clientset {
 	// creates the in-cluster config
 	config, err := rest.InClusterConfig()
 	if err != nil {

@@ -42,7 +42,7 @@ func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSki
 		Timeout: timeout,
 	}
 
-	if tlsSkipVerify == true {
+	if tlsSkipVerify {
 		customTransport := http.DefaultTransport.(*http.Transport).Clone()
 		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
