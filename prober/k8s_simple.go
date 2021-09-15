@@ -30,26 +30,26 @@ func init() {
 }
 
 type SimpleProbe struct {
-	Client *kubernetes.Clientset
+	Client    *kubernetes.Clientset
 	NameSpace string
-	RPS    float64
-	ticker *time.Ticker
+	RPS       float64
+	ticker    *time.Ticker
 }
 
 func NewSimpleProbe(client *kubernetes.Clientset, namespace string, rps float64) SimpleProbe {
-	return SimpleProbe {
-		Client: client,
+	return SimpleProbe{
+		Client:    client,
 		NameSpace: namespace,
-		RPS: rps,
+		RPS:       rps,
 	}
 }
 
 func (sp *SimpleProbe) Start(ctx context.Context) {
 	sp.ticker = time.NewTicker(sp.calculateInterval())
 	defer sp.ticker.Stop()
-	
+
 	for {
-		select{
+		select {
 		case <-ctx.Done():
 			log.Print("Context is done!")
 			return
@@ -62,7 +62,7 @@ func (sp *SimpleProbe) Start(ctx context.Context) {
 	}
 }
 
-func (sp* SimpleProbe) GetPods(ctx context.Context) {
+func (sp *SimpleProbe) GetPods(ctx context.Context) {
 	pods, err := sp.Client.CoreV1().Pods(sp.NameSpace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		panic(err.Error())
