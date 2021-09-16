@@ -18,7 +18,7 @@ var (
 			Name: "health_dns_requests_total",
 			Help: "The number of dns requests",
 		},
-		[]string{"name", "rcode", "rcode_value", "result", "domain"},
+		[]string{"name", "rcode", "rcode_value", "result", "domain", "server"},
 	)
 	dnsDurations = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
@@ -26,7 +26,7 @@ var (
 			Help:    "The response time of dns requests",
 			Buckets: []float64{0.001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.2, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4, 5},
 		},
-		[]string{"name", "rcode", "rcode_value", "result", "domain"},
+		[]string{"name", "rcode", "rcode_value", "result", "domain", "server"},
 	)
 )
 
@@ -91,6 +91,7 @@ func (d *DNS) Start(ctx context.Context) {
 					"rcode_value": strconv.Itoa(stats.RCodeValue),
 					"result":      stats.Result,
 					"name":        d.Name,
+					"server":      net.JoinHostPort(d.ServerIP, strconv.Itoa(d.ServerPort)),
 				}).Inc()
 				dnsDurations.With(prometheus.Labels{
 					"domain":      d.Domain,
@@ -98,6 +99,7 @@ func (d *DNS) Start(ctx context.Context) {
 					"rcode_value": strconv.Itoa(stats.RCodeValue),
 					"result":      stats.Result,
 					"name":        d.Name,
+					"server":      net.JoinHostPort(d.ServerIP, strconv.Itoa(d.ServerPort)),
 				}).Observe(stats.ResponseTime)
 			})()
 
