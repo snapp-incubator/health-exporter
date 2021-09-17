@@ -10,6 +10,7 @@ require (
 	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0 // indirect
 	k8s.io/apimachinery v0.18.0
 	k8s.io/client-go v0.18.0
+	k8s.io/klog/v2 v2.20.0
 )
 
 require (
@@ -17,6 +18,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
+	github.com/go-logr/logr v1.0.0 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/golang/protobuf v1.4.2 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect

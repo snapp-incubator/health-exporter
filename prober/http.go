@@ -3,7 +3,6 @@ package prober
 import (
 	"context"
 	"crypto/tls"
-	"log"
 	"net"
 	"net/http"
 	url2 "net/url"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	klog "k8s.io/klog/v2"
 )
 
 var (
@@ -82,7 +82,7 @@ func (h *HTTP) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Print("Context is done!")
+			klog.Info("Context is done!")
 			return
 		case <-h.ticker.C:
 			go (func() {

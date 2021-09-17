@@ -3,13 +3,13 @@ package prober
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 	"time"
 
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
+	klog "k8s.io/klog/v2"
 )
 
 var (
@@ -79,7 +79,7 @@ func (d *DNS) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Print("Context is done!")
+			klog.Info("Context is done!")
 			return
 		case <-d.ticker.C:
 			go (func() {

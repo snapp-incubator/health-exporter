@@ -5,11 +5,11 @@ package prober
 
 import (
 	"context"
-	"log"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	klog "k8s.io/klog/v2"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -51,7 +51,7 @@ func (sp *SimpleProbe) Start(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Print("Context is done!")
+			klog.Info("Context is done!")
 			return
 		case <-sp.ticker.C:
 			go (func() {
@@ -65,7 +65,7 @@ func (sp *SimpleProbe) Start(ctx context.Context) {
 func (sp *SimpleProbe) GetPods(ctx context.Context) {
 	pods, err := sp.Client.CoreV1().Pods(sp.NameSpace).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		panic(err.Error())
+		klog.Warning(err)
 	}
 	pod_count := float64(len(pods.Items))
 	podCount.With(prometheus.Labels{
