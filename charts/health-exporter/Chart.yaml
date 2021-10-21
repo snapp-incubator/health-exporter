@@ -4,5 +4,5 @@ home: https://github.com/snapp-cab/health-exporter
 sources:
   - https://github.com/snapp-cab/health-exporter.git
 type: application
-version: 0.3.2
-appVersion: 0.3.0
+version: 0.3.3
+appVersion: 0.3.1

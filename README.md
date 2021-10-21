@@ -39,7 +39,7 @@ sudo docker run -p 8080:8080 -v ./config.yaml:/app/config.yaml:z docker.pkg.gith
     untested.
 
 
-1. Add the HashiCorp Helm Repository:
+1. Add the SnappCab Helm Repository:
 
 ```bash
 helm repo add snapp-cab https://snapp-cab.github.io/health-exporter/charts

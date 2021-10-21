@@ -22,19 +22,19 @@ autoscaling:
 config:
   listen: ':9876'
   targets:
-    http:
-      - name: 'sample'
-        url: 'http://google.com'
-        rps: 0.5
-        timeout: '5s'
-      - name: 'google-tls'
-        url: 'https://google.com'
-        rps: 0.5
-        timeout: '5s'
-        tls_skip_verify: true
-    dns:
-      - name: 'google'
-        domain: 'google.com'
-        record_type: 'A'
-        rps: 0.5
-        timeout: '2s'
+    http: []
+      # - name: 'sample'
+      #   url: 'http://google.com'
+      #   rps: 0.5
+      #   timeout: '5s'
+      # - name: 'google-tls'
+      #   url: 'https://google.com'
+      #   rps: 0.5
+      #   timeout: '5s'
+      #   tls_skip_verify: true
+    dns: []
+      # - name: 'google'
+      #   domain: 'google.com'
+      #   record_type: 'A'
+      #   rps: 0.5
+      #   timeout: '2s'
