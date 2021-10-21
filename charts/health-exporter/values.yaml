@@ -1,7 +1,8 @@
 # Default values for health-exporter.
 image:
-  repository: "spc35771/health-exporter"
-  tag: "latest"
+  repository: "ghcr.io/snapp-incubator/health-exporter"
+  # defaults to chart appVersion
+  tag: ""
 replicas: 1
 resources:
   limits:
