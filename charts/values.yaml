@@ -11,6 +11,13 @@ resources:
     memory: "100Mi"
     cpu: "1"
 
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
 config:
   listen: ':9876'
   targets:
