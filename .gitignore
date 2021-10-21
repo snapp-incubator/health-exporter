@@ -238,8 +238,6 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/go,jetbrains+all,visualstudiocode,sublimetext,macos,osx,windows,linux
 
 # Custom
-health_exporter
-health-exporter
 app
 config.yaml
 
