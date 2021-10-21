@@ -2,6 +2,18 @@ apiVersion: v1
 entries:
   health-exporter:
   - apiVersion: v2
+    appVersion: 0.3.0
+    created: "2021-10-21T14:08:00.276879409Z"
+    digest: 196fa6bcb531a5d829ef6c7c033b8ce87f2d282f0b81cf10ab134415542513e9
+    home: https://github.com/snapp-cab/health-exporter
+    name: health-exporter
+    sources:
+    - https://github.com/snapp-cab/health-exporter.git
+    type: application
+    urls:
+    - https://github.com/snapp-incubator/health-exporter/releases/download/health-exporter-0.3.2/health-exporter-0.3.2.tgz
+    version: 0.3.2
+  - apiVersion: v2
     appVersion: 1.0.0
     created: "2021-10-21T12:30:03.182048191Z"
     digest: 44958fa2e4a5c1ad1a1c3c1ba3f6774206966337e2ff3201a8a00611b3c7b5f8
@@ -13,4 +25,4 @@ entries:
     urls:
     - https://github.com/snapp-incubator/health-exporter/releases/download/health-exporter-0.3.1/health-exporter-0.3.1.tgz
     version: 0.3.1
-generated: "2021-10-21T12:30:03.182055691Z"
+generated: "2021-10-21T14:08:00.27689501Z"
