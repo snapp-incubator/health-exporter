@@ -3,7 +3,6 @@ package prober
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptrace"
