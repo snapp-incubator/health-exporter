@@ -8,6 +8,7 @@
 *.dll
 *.so
 *.dylib
+health_exporter
 
 # Test binary, built with `go test -c`
 *.test
