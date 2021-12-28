@@ -143,32 +143,13 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	var finishTime time.Time
 	var dnsStartTime time.Time
 	var dnsDoneTime time.Time
-	var connectStartTime time.Time
-	var connectDoneTime time.Time
-	var tlsHandshakeStartTime time.Time
-	var tlsHandshakeDoneTime time.Time
+
 	httpTrace := &httptrace.ClientTrace{
-		GetConn: func(_ string) {
-		},
-		GotConn: func(info httptrace.GotConnInfo) {
-		},
 		DNSStart: func(_ httptrace.DNSStartInfo) {
 			dnsStartTime = time.Now()
 		},
 		DNSDone: func(_ httptrace.DNSDoneInfo) {
 			dnsDoneTime = time.Now()
-		},
-		ConnectStart: func(_, _ string) {
-			connectStartTime = time.Now()
-		},
-		ConnectDone: func(network, addr string, err error) {
-			connectDoneTime = time.Now()
-		},
-		TLSHandshakeStart: func() {
-			tlsHandshakeStartTime = time.Now()
-		},
-		TLSHandshakeDone: func(state tls.ConnectionState, err error) {
-			tlsHandshakeDoneTime = time.Now()
 		},
 	}
 
