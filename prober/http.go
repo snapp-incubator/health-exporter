@@ -3,10 +3,8 @@ package prober
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	klog "k8s.io/klog/v2"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -153,8 +151,6 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 		GetConn: func(_ string) {
 		},
 		GotConn: func(info httptrace.GotConnInfo) {
-			log.Printf("conn was reused: %t", info.Reused)
-
 		},
 		DNSStart: func(_ httptrace.DNSStartInfo) {
 			dnsStartTime = time.Now()
@@ -185,17 +181,9 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	finishTime = time.Now()
 
 	responseTime := finishTime.Sub(startTime)
-	responseTimeInMilliseconds := int(responseTime / time.Millisecond)
-
 	dnsLookupTime := dnsDoneTime.Sub(dnsStartTime)
-	dnsLookupTimeInMilliseconds := int(dnsLookupTime / time.Millisecond)
 
-	connectionHandshakeTime := connectDoneTime.Sub(connectStartTime)
-	connectionHandshakeTimeInMilliseconds := int(connectionHandshakeTime / time.Millisecond)
 
-	tlsHandshakeTime := tlsHandshakeDoneTime.Sub(tlsHandshakeStartTime)
-	tlsHandshakeTimeInMilliseconds := int(tlsHandshakeTime / time.Millisecond)
-	fmt.Println(responseTimeInMilliseconds, dnsLookupTimeInMilliseconds, connectionHandshakeTimeInMilliseconds, tlsHandshakeTimeInMilliseconds)
 	if err != nil {
 		return HTTPResult{
 			ResponseTime:  float64(responseTime),
