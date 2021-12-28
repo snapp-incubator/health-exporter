@@ -127,7 +127,7 @@ func (h *HTTP) Start(ctx context.Context) {
 					"status_code": strconv.Itoa(stats.StatusCode),
 					"result":      result,
 					"name":        h.Name,
-				}).Observe(stats.dnsLookupTime)
+				}).Observe(stats.DNSLookupTime)
 			})()
 
 		}
@@ -170,14 +170,14 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 			ResponseTime:  float64(responseTime),
 			Error:         err,
 			ErrorType:     h.errorType(err),
-			dnsLookupTime: float64(dnsLookupTime),
+			DNSLookupTime: float64(dnsLookupTime),
 		}
 	}
 	defer res.Body.Close()
 	return HTTPResult{
 		StatusCode:    res.StatusCode,
 		ResponseTime:  float64(responseTime),
-		dnsLookupTime: float64(dnsLookupTime),
+		DNSLookupTime: float64(dnsLookupTime),
 	}
 }
 func (h *HTTP) errorType(err error) string {
