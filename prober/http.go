@@ -164,7 +164,9 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	req, _ := http.NewRequest(http.MethodGet, h.URL, nil)
 	clientTraceCtx := httptrace.WithClientTrace(req.Context(), httpTrace)
 	req = req.WithContext(clientTraceCtx)
-
+	if h.Host != "" {
+		req.Host = h.Host
+	}
 	startTime = time.Now()
 	res, err := h.Client.Do(req)
 	responseTime := time.Since(startTime).Seconds()
