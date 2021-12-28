@@ -53,9 +53,7 @@ func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSki
 		Timeout: timeout,
 	}
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	if disableKeepAlives {
-		customTransport.DisableKeepAlives = true
-	}
+	customTransport.DisableKeepAlives = disableKeepAlives
 	if tlsSkipVerify {
 		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
@@ -161,9 +159,8 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 		},
 	}
 
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, h.URL, nil)
-	clientTraceCtx := httptrace.WithClientTrace(req.Context(), httpTrace)
-	req = req.WithContext(clientTraceCtx)
+	clientTraceCtx := httptrace.WithClientTrace(ctx, httpTrace)
+	req, _ := http.NewRequestWithContext(clientTraceCtx, http.MethodGet, h.URL, nil)
 	if h.Host != "" {
 		req.Host = h.Host
 	}
