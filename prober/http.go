@@ -147,7 +147,6 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	var dnsStartTime time.Time
 	var dnsDoneTime time.Time
 	var dnsError string
-	dnsError= "test"
 	httpTrace := &httptrace.ClientTrace{
 		DNSStart: func(_ httptrace.DNSStartInfo) {
 			dnsStartTime = time.Now()
