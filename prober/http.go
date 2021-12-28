@@ -172,18 +172,18 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 
 	if err != nil {
 		return HTTPResult{
-			ResponseTime:  float64(responseTime),
+			ResponseTime:  responseTime,
 			Error:         err,
 			ErrorType:     h.errorType(err),
-			DNSLookupTime: float64(dnsLookupTime),
+			DNSLookupTime: dnsLookupTime,
 			DNSError:      dnsError,
 		}
 	}
 	defer res.Body.Close()
 	return HTTPResult{
 		StatusCode:    res.StatusCode,
-		ResponseTime:  float64(responseTime),
-		DNSLookupTime: float64(dnsLookupTime),
+		ResponseTime:  responseTime,
+		DNSLookupTime: dnsLookupTime,
 		DNSError:      dnsError,
 	}
 }
