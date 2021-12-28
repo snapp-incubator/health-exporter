@@ -44,12 +44,13 @@ type Target struct {
 }
 
 type HTTP struct {
-	Name          string        `mapstructure:"name"`
-	URL           string        `mapstructure:"url"`
-	RPS           float64       `mapstructure:"rps"`
-	Timeout       time.Duration `mapstructure:"timeout"`
-	TLSSkipVerify bool          `mapstructure:"tls_skip_verify"`
-	Host          string        `mapstructure:"host"`
+	Name              string        `mapstructure:"name"`
+	URL               string        `mapstructure:"url"`
+	RPS               float64       `mapstructure:"rps"`
+	Timeout           time.Duration `mapstructure:"timeout"`
+	TLSSkipVerify     bool          `mapstructure:"tls_skip_verify"`
+	DisableKeepAlives bool          `mapstructure:"disable_keepalives"`
+	Host              string        `mapstructure:"host"`
 }
 
 type DNS struct {

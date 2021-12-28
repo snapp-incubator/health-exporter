@@ -48,12 +48,14 @@ func init() {
 
 }
 
-func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify bool, host string) HTTP {
+func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify, disableKeepAlives bool, host string) HTTP {
 	client := &http.Client{
 		Timeout: timeout,
 	}
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.DisableKeepAlives = true
+	if disableKeepAlives {
+		customTransport.DisableKeepAlives = true
+	}
 	if tlsSkipVerify {
 		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
@@ -74,7 +76,7 @@ type HTTPResult struct {
 	Error         error
 	ErrorType     string
 	DNSLookupTime float64
-	DNSError string
+	DNSError      string
 }
 
 type HTTP struct {
@@ -143,7 +145,6 @@ func (h *HTTP) calculateInterval() time.Duration {
 
 func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	var startTime time.Time
-	var finishTime time.Time
 	var dnsStartTime time.Time
 	var dnsDoneTime time.Time
 	var dnsError string
@@ -163,29 +164,29 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	req, _ := http.NewRequest(http.MethodGet, h.URL, nil)
 	clientTraceCtx := httptrace.WithClientTrace(req.Context(), httpTrace)
 	req = req.WithContext(clientTraceCtx)
-
+	if h.Host != "" {
+		req.Host = h.Host
+	}
 	startTime = time.Now()
 	res, err := h.Client.Do(req)
-	finishTime = time.Now()
-
-	responseTime := finishTime.Sub(startTime)
-	dnsLookupTime := dnsDoneTime.Sub(dnsStartTime)
+	responseTime := time.Since(startTime).Seconds()
+	dnsLookupTime := dnsDoneTime.Sub(dnsStartTime).Seconds()
 
 	if err != nil {
 		return HTTPResult{
-			ResponseTime:  float64(responseTime),
+			ResponseTime:  responseTime,
 			Error:         err,
 			ErrorType:     h.errorType(err),
-			DNSLookupTime: float64(dnsLookupTime),
-			DNSError: dnsError,
+			DNSLookupTime: dnsLookupTime,
+			DNSError:      dnsError,
 		}
 	}
 	defer res.Body.Close()
 	return HTTPResult{
 		StatusCode:    res.StatusCode,
-		ResponseTime:  float64(responseTime),
-		DNSLookupTime: float64(dnsLookupTime),
-		DNSError: dnsError,
+		ResponseTime:  responseTime,
+		DNSLookupTime: dnsLookupTime,
+		DNSError:      dnsError,
 	}
 }
 func (h *HTTP) errorType(err error) string {
