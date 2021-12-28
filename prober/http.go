@@ -72,7 +72,7 @@ type HTTPResult struct {
 	StatusCode    int
 	Error         error
 	ErrorType     string
-	dnsLookupTime float64
+	DNSLookupTime float64
 }
 
 type HTTP struct {
