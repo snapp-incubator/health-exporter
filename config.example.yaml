@@ -2,37 +2,8 @@ listen: ':9876'
 targets:
   http:
     - name: 'google'
-      url: 'https://www.google.com/'
+      url: 'https://www.gsdfsdoogle.com/'
       rps: 0.5 # 2 RPS
       timeout: '1s'
-    - name: 'kubernetes-internal'
-      url: 'http://kubernetes.default.svc'
-      rps: 2.0
-      timeout: '1s'
-      tls_skip_verify: true
-    - name: 'host-header'
-      url: http://apps.private.okd4.teh-1.snappcloud.io
-      rps: 1.0
-      timeout: '3s'
-      host: health-be.apps.private.okd4.teh-1.snappcloud.io
-  dns:
-    - name: 'google'
-      domain: 'google.com'
-      record_type: 'A'
-      rps: 1.0
-      timeout: '2s'
-    - name: 'health-be-svc'
-      domain: 'health-be.monitoring.svc.cluster.local'
-      record_type: 'A'
-      rps: 1.0
-      timeout: '2s'
-      server_ip: 8.8.8.8
-      server_port: 53
-  k8s:
-    enabled: false
-    simple-probe:
-      - namespace: monitoring
-        rps: 1.0
-
 
 

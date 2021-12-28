@@ -3,14 +3,16 @@ package prober
 import (
 	"context"
 	"crypto/tls"
-	"github.com/prometheus/client_golang/prometheus"
-	klog "k8s.io/klog/v2"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptrace"
 	url2 "net/url"
 	"strconv"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	klog "k8s.io/klog/v2"
 )
 
 var (
@@ -35,7 +37,7 @@ var (
 			Help:    "The response time of dns lookup",
 			Buckets: []float64{0.001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.2, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4, 5},
 		},
-		[]string{"name", "status_code", "result", "url"},
+		[]string{"name", "status_code", "dns_error", "result", "url"},
 	)
 )
 
@@ -73,6 +75,7 @@ type HTTPResult struct {
 	Error         error
 	ErrorType     string
 	DNSLookupTime float64
+	DNSError string
 }
 
 type HTTP struct {
@@ -127,6 +130,7 @@ func (h *HTTP) Start(ctx context.Context) {
 					"status_code": strconv.Itoa(stats.StatusCode),
 					"result":      result,
 					"name":        h.Name,
+					"dns_error":   stats.DNSError,
 				}).Observe(stats.DNSLookupTime)
 			})()
 
@@ -143,13 +147,18 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	var finishTime time.Time
 	var dnsStartTime time.Time
 	var dnsDoneTime time.Time
-
+	var dnsError string
+	dnsError= "test"
 	httpTrace := &httptrace.ClientTrace{
 		DNSStart: func(_ httptrace.DNSStartInfo) {
 			dnsStartTime = time.Now()
 		},
-		DNSDone: func(_ httptrace.DNSDoneInfo) {
+		DNSDone: func(info httptrace.DNSDoneInfo) {
 			dnsDoneTime = time.Now()
+			if info.Err != nil {
+				klog.Infof("DNS Error: %v ", info.Err)
+				dnsError = info.Err.Error()
+			}
 		},
 	}
 
@@ -164,13 +173,13 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 	responseTime := finishTime.Sub(startTime)
 	dnsLookupTime := dnsDoneTime.Sub(dnsStartTime)
 
-
 	if err != nil {
 		return HTTPResult{
 			ResponseTime:  float64(responseTime),
 			Error:         err,
 			ErrorType:     h.errorType(err),
 			DNSLookupTime: float64(dnsLookupTime),
+			DNSError: dnsError,
 		}
 	}
 	defer res.Body.Close()
@@ -178,6 +187,7 @@ func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {
 		StatusCode:    res.StatusCode,
 		ResponseTime:  float64(responseTime),
 		DNSLookupTime: float64(dnsLookupTime),
+		DNSError: dnsError,
 	}
 }
 func (h *HTTP) errorType(err error) string {
