@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 	"time"
+
 	"github.com/go-ping/ping"
 	"github.com/prometheus/client_golang/prometheus"
 	klog "k8s.io/klog/v2"
@@ -74,15 +75,14 @@ func (i *ICMP) sendRequest(ctx context.Context) ICMPResult {
 	if err != nil {
 		return ICMPResult{Error: err}
 	}
+	//set default 
+	pinger.Timeout = time.Second * 100000
+	pinger.TTL = 64
 	pinger.Timeout = i.Timeout
-	pinger.TTL = i.TTL
-	pinger.SetPrivileged(false)
-
-	fmt.Printf("PING %s (%s):\n", pinger.Addr(), pinger.IPAddr())
-	err = pinger.Run()
-	if err != nil {
-		return ICMPResult{Error: err}
+	if i.TTL != 0 {
+		pinger.TTL = i.TTL
 	}
+	pinger.SetPrivileged(false)
 	pinger.OnRecv = func(pkt *ping.Packet) {
 		fmt.Printf("%d bytes from %s: icmp_seq=%d time=%v ttl=%v\n",
 			pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt, pkt.Ttl)
@@ -93,6 +93,10 @@ func (i *ICMP) sendRequest(ctx context.Context) ICMPResult {
 			RTT:    pkt.Rtt,
 			TTL:    pkt.Ttl,
 		}
+	}
+	err = pinger.Run()
+	if err != nil {
+		return ICMPResult{Error: err}
 	}
 	return icmpresult
 
@@ -124,7 +128,7 @@ func (i *ICMP) Start(ctx context.Context) {
 					"name":   i.Name,
 					"ttl":    strconv.Itoa(stats.TTL),
 				}).Inc()
-				httpDurations.With(prometheus.Labels{
+				icmpDurations.With(prometheus.Labels{
 					"host":   i.Host,
 					"result": result,
 					"name":   i.Name,
