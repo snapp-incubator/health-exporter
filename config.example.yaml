@@ -33,6 +33,14 @@ targets:
     simple-probe:
       - namespace: monitoring
         rps: 1.0
-
-
+  icmp:
+    - name: 'google'
+      host: 'www.google.com'
+      rps: 0.5 # 2 RPS
+      timeout: '1s'
+      ttl:   100
+    - name: 'digikala'
+      host: 'www.digikala.com'
+      rps: 0.5 # 2 RPS
+      timeout: '1s'
 
