@@ -10,7 +10,7 @@ require (
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	k8s.io/apimachinery v0.23.4
 	k8s.io/client-go v0.23.4
-	k8s.io/klog/v2 v2.40.1
+	k8s.io/klog/v2 v2.60.1
 )
 
 require (
