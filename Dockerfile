@@ -1,5 +1,5 @@
 #build stage
-FROM golang:1.17 AS builder
+FROM golang:1.19.0 AS builder
 RUN mkdir -p /go/src/app
 WORKDIR /go/src/app
 
