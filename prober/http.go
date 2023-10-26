@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/net/http2"
 	klog "k8s.io/klog/v2"
 )
 
@@ -48,16 +49,32 @@ func init() {
 
 }
 
-func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify, disableKeepAlives bool, host string) HTTP {
+func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify, disableKeepAlives, http2Enabled bool, host string) HTTP {
 	client := &http.Client{
 		Timeout: timeout,
 	}
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.DisableKeepAlives = disableKeepAlives
-	if tlsSkipVerify {
-		customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+
+	if http2Enabled {
+		customTransport := &http2.Transport{
+			AllowHTTP: true,
+			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
+				return net.Dial(network, addr)
+			},
+		}
+		if tlsSkipVerify {
+			customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		}
+		client.Transport = customTransport
+	} else {
+		customTransport := http.DefaultTransport.(*http.Transport).Clone()
+
+		// disableKeepalive is only for http1.1
+		customTransport.DisableKeepAlives = disableKeepAlives
+		if tlsSkipVerify {
+			customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+		}
+		client.Transport = customTransport
 	}
-	client.Transport = customTransport
 
 	return HTTP{
 		Name:   name,
