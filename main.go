@@ -33,10 +33,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	for _, ht := range config.Get().Targets.HTTP {
-		httpProber := prober.NewHttp(ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify, ht.DisableKeepAlives, ht.Http2Enabled, ht.Host)
+		httpProber := prober.NewHttp(ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify, ht.DisableKeepAlives, ht.H2cEnabled, ht.Host)
 
-		klog.Infof("Probing HTTP target '%s' with url '%s', RPS: %.2f, timeout: %s, TLS_skip_verify: %v, disableKeepAlives: %v, http2Enabled: %v ...\n",
-			ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify, ht.DisableKeepAlives, ht.Http2Enabled)
+		klog.Infof("Probing HTTP target '%s' with url '%s', RPS: %.2f, timeout: %s, TLS_skip_verify: %v, disableKeepAlives: %v, h2cEnabled: %v ...\n",
+			ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify, ht.DisableKeepAlives, ht.H2cEnabled)
 		go httpProber.Start(ctx)
 	}
 

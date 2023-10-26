@@ -50,7 +50,7 @@ type HTTP struct {
 	Timeout           time.Duration `mapstructure:"timeout"`
 	TLSSkipVerify     bool          `mapstructure:"tls_skip_verify"`
 	DisableKeepAlives bool          `mapstructure:"disable_keepalives"`
-	Http2Enabled      bool          `mapstructure:"http2_enabled"`
+	H2cEnabled        bool          `mapstructure:"h2c_enabled"`
 	Host              string        `mapstructure:"host"`
 }
 

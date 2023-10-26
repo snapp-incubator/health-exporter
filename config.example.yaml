@@ -19,7 +19,7 @@ targets:
       url: http://172.21.88.1:8080
       rps: 2.0
       timeout: '3s'
-      http2_enabled: true
+      h2c_enabled: true
   dns:
     - name: 'google'
       domain: 'google.com'

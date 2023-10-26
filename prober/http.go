@@ -49,12 +49,12 @@ func init() {
 
 }
 
-func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify, disableKeepAlives, http2Enabled bool, host string) HTTP {
+func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify, disableKeepAlives, h2cEnabled bool, host string) HTTP {
 	client := &http.Client{
 		Timeout: timeout,
 	}
 
-	if http2Enabled {
+	if h2cEnabled {
 		customTransport := &http2.Transport{
 			AllowHTTP: true,
 			DialTLS: func(network, addr string, cfg *tls.Config) (net.Conn, error) {
