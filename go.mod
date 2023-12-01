@@ -3,13 +3,13 @@ module gitlab.snapp.ir/snappcloud/health_exporter
 go 1.17
 
 require (
-	github.com/miekg/dns v1.1.56
+	github.com/miekg/dns v1.1.57
 	github.com/prometheus/client_golang v1.17.0
 	github.com/spf13/viper v1.17.0
-	golang.org/x/net v0.17.0
-	golang.org/x/sys v0.13.0 // indirect
-	k8s.io/apimachinery v0.28.3
-	k8s.io/client-go v0.28.3
+	golang.org/x/net v0.19.0
+	golang.org/x/sys v0.15.0 // indirect
+	k8s.io/apimachinery v0.28.4
+	k8s.io/client-go v0.28.4
 	k8s.io/klog/v2 v2.110.1
 )
 
@@ -55,8 +55,8 @@ require (
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/oauth2 v0.12.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.13.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -65,7 +65,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.28.3 // indirect
+	k8s.io/api v0.28.4 // indirect
 	k8s.io/kube-openapi v0.0.0-20230717233707-2695361300d9 // indirect
 	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
