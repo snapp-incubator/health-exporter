@@ -2,8 +2,6 @@ package prober
 
 import (
 	"context"
-	"fmt"
-	"net"
 	"strconv"
 	"time"
 
@@ -39,13 +37,9 @@ type ICMP struct {
 	ticker  *time.Ticker
 }
 type ICMPResult struct {
-	Size      int
-	IPAddr    *net.IPAddr
-	Seq       int
-	RTT       time.Duration
-	TTL       int
-	ErrorType string
-	Error     error
+	RTT   time.Duration
+	TTL   int
+	Error error
 }
 
 // TODO: it could be a bad practice!
@@ -54,6 +48,7 @@ func init() {
 	prometheus.MustRegister(icmpRequests)
 
 }
+
 func NewICMP(name string, host string, rps float64, ttl int, timeout time.Duration) ICMP {
 
 	return ICMP{
@@ -65,9 +60,6 @@ func NewICMP(name string, host string, rps float64, ttl int, timeout time.Durati
 	}
 
 }
-func (i *ICMP) calculateInterval() time.Duration {
-	return time.Duration(1000.0/i.RPS) * time.Millisecond
-}
 
 func (i *ICMP) sendRequest(ctx context.Context) ICMPResult {
 	icmpresult := ICMPResult{}
@@ -75,7 +67,7 @@ func (i *ICMP) sendRequest(ctx context.Context) ICMPResult {
 	if err != nil {
 		return ICMPResult{Error: err}
 	}
-	//set default 
+	//set default
 	pinger.Timeout = time.Second * 100000
 	pinger.TTL = 64
 	pinger.Timeout = i.Timeout
@@ -84,14 +76,9 @@ func (i *ICMP) sendRequest(ctx context.Context) ICMPResult {
 	}
 	pinger.SetPrivileged(false)
 	pinger.OnRecv = func(pkt *ping.Packet) {
-		fmt.Printf("%d bytes from %s: icmp_seq=%d time=%v ttl=%v\n",
-			pkt.Nbytes, pkt.IPAddr, pkt.Seq, pkt.Rtt, pkt.Ttl)
 		icmpresult = ICMPResult{
-			Size:   pkt.Nbytes,
-			IPAddr: pkt.IPAddr,
-			Seq:    pkt.Seq,
-			RTT:    pkt.Rtt,
-			TTL:    pkt.Ttl,
+			RTT: pkt.Rtt,
+			TTL: pkt.Ttl,
 		}
 	}
 	err = pinger.Run()
@@ -103,8 +90,7 @@ func (i *ICMP) sendRequest(ctx context.Context) ICMPResult {
 }
 
 func (i *ICMP) Start(ctx context.Context) {
-
-	i.ticker = time.NewTicker(i.calculateInterval())
+	i.ticker = time.NewTicker(calculateInterval(i.RPS))
 	defer i.ticker.Stop()
 
 	for {

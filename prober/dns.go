@@ -73,7 +73,7 @@ type DNS struct {
 
 func (d *DNS) Start(ctx context.Context) {
 
-	d.ticker = time.NewTicker(d.calculateInterval())
+	d.ticker = time.NewTicker(calculateInterval(d.RPS))
 	defer d.ticker.Stop()
 
 	for {
@@ -105,10 +105,6 @@ func (d *DNS) Start(ctx context.Context) {
 
 		}
 	}
-}
-
-func (d *DNS) calculateInterval() time.Duration {
-	return time.Duration(1000.0/d.RPS) * time.Millisecond
 }
 
 func (d *DNS) sendRequest(ctx context.Context) DNSResult {
