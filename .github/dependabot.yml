@@ -4,16 +4,19 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
-    assignees:
-      - m-yosefpor
     labels:
       - dependencies
-
+    groups:
+       dev-dependencies:
+          patterns:
+            - "*"  
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "monthly"
-    assignees:
-      - m-yosefpor
     labels:
       - dependencies
+    groups:
+       dev-dependencies:
+          patterns:
+            - "*"  
