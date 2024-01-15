@@ -41,6 +41,7 @@ type Target struct {
 	HTTP []HTTP `mapstructure:"http"`
 	DNS  []DNS  `mapstructure:"dns"`
 	K8S  K8S    `mapstructure:"k8s"`
+	ICMP []ICMP `mapstructure:"icmp"`
 }
 
 type HTTP struct {
@@ -72,4 +73,11 @@ type K8S struct {
 type K8S_SimpleProbe struct {
 	NameSpace string  `mapstructure:"namespace"`
 	RPS       float64 `mapstructure:"rps"`
+}
+type ICMP struct {
+	Name    string        `mapstructure:"name"`
+	Host    string        `mapstructure:"host"`
+	TTL     int           `mapstructure:"ttl"`
+	RPS     float64       `mapstructure:"rps"`
+	Timeout time.Duration `mapstructure:"timeout"`
 }

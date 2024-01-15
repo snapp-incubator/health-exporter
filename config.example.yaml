@@ -15,11 +15,6 @@ targets:
       rps: 1.0
       timeout: '3s'
       host: health-be.apps.private.okd4.teh-1.snappcloud.io
-    - name: 'h2c'
-      url: http://172.21.88.1:8080
-      rps: 2.0
-      timeout: '3s'
-      h2c_enabled: true
   dns:
     - name: 'google'
       domain: 'google.com'
@@ -38,3 +33,14 @@ targets:
     simple-probe:
       - namespace: monitoring
         rps: 1.0
+  icmp:
+    - name: 'google'
+      host: 'www.google.com'
+      rps: 0.5 # 2 RPS
+      timeout: '1s'
+      ttl:   100
+    - name: 'digikala'
+      host: 'www.digikala.com'
+      rps: 0.5 # 2 RPS
+      timeout: '1s'
+

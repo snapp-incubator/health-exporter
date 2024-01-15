@@ -105,7 +105,7 @@ type HTTP struct {
 
 func (h *HTTP) Start(ctx context.Context) {
 
-	h.ticker = time.NewTicker(h.calculateInterval())
+	h.ticker = time.NewTicker(calculateInterval(h.RPS))
 	defer h.ticker.Stop()
 
 	for {
@@ -152,10 +152,6 @@ func (h *HTTP) Start(ctx context.Context) {
 
 		}
 	}
-}
-
-func (h *HTTP) calculateInterval() time.Duration {
-	return time.Duration(1000.0/h.RPS) * time.Millisecond
 }
 
 func (h *HTTP) sendRequest(ctx context.Context) HTTPResult {

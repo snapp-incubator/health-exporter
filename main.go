@@ -66,6 +66,14 @@ func main() {
 	} else {
 		klog.Infof("K8S Prober is Disabled")
 	}
+	for _, i := range config.Get().Targets.ICMP {
+
+		icmpProber := prober.NewICMP(i.Name, i.Host, i.RPS, i.TTL, i.Timeout)
+		klog.Infof("Probing ICMP target '%s' with host '%s', RPS: %.2f, timeout: %s, ttl: %v\n",
+			i.Name, i.Host, i.RPS, i.Timeout, i.TTL)
+		go icmpProber.Start(ctx)
+
+	}
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
