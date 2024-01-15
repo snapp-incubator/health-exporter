@@ -6,17 +6,14 @@ require (
 	github.com/miekg/dns v1.1.43
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/viper v1.9.0
-	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
-	golang.org/x/sys v0.0.0-20210910150752-751e447fb3d0 // indirect
+	golang.org/x/net v0.17.0
+	golang.org/x/sys v0.13.0 // indirect
 	k8s.io/apimachinery v0.23.1
 	k8s.io/client-go v0.22.4
 	k8s.io/klog/v2 v2.40.1
 )
 
-require (
-	github.com/go-ping/ping v0.0.0-20211130115550-779d1e919534
-	github.com/kr/pretty v0.2.0
-)
+require github.com/go-ping/ping v0.0.0-20211130115550-779d1e919534
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -32,7 +29,6 @@ require (
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
@@ -49,8 +45,8 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
