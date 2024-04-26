@@ -6,7 +6,7 @@ require (
 	github.com/miekg/dns v1.1.58
 	github.com/prometheus/client_golang v1.19.0
 	github.com/spf13/viper v1.18.2
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.23.0
 	golang.org/x/sys v0.18.0 // indirect
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
