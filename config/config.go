@@ -1,83 +1,64 @@
 package config
 
 import (
-	"fmt"
-	"time"
+	"os"
 
-	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 )
 
-var config Config
-
-func Get() Config {
-	return config
+type Target struct {
+	HTTP []Http `yaml:"http"`
+	DNS  []Dns  `yaml:"dns"`
+	ICMP []Icmp `yaml:"icmp"`
+	K8S  K8s    `yaml:"k8s"`
 }
 
-func Read(path string) error {
-	viper.SetConfigName(path)
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
+type Http struct {
+	Name              string `yaml:"name"`
+	URL               string `yaml:"url"`
+	RPS               int    `yaml:"rps"`
+	Timeout           int    `yaml:"timeout"`
+	TLSSkipVerify     bool   `yaml:"tls_skip_verify"`
+	DisableKeepAlives bool   `yaml:"disable_keep_alives"`
+	H2cEnabled        bool   `yaml:"h2c_enabled"`
+	Host              string `yaml:"host"`
+}
 
-	if err != nil {
-		return fmt.Errorf("cannot read config file: %w", err)
-	}
+type Dns struct {
+	Name     string `yaml:"name"`
+	Server   string `yaml:"server"`
+	Domain   string `yaml:"domain"`
+	Interval int    `yaml:"interval"`
+}
 
-	err = viper.Unmarshal(&config)
+type Icmp struct {
+	Name     string `yaml:"name"`
+	Host     string `yaml:"host"`
+	Interval int    `yaml:"interval"`
+}
 
-	if err != nil {
-		return fmt.Errorf("cannot unmarshal config file: %w", err)
-	}
-
-	return nil
+type K8s struct {
+	Enabled       bool   `yaml:"enabled"`
+	Namespace     string `yaml:"namespace"`
+	LabelSelector string `yaml:"label_selector"`
+	Interval      int    `yaml:"interval"`
 }
 
 type Config struct {
-	Listen  string `mapstructure:"listen"`
-	Targets Target `mapstructure:"targets"`
+	Listen  string `yaml:"listen"`
+	Targets Target `yaml:"targets"`
 }
 
-type Target struct {
-	HTTP []HTTP `mapstructure:"http"`
-	DNS  []DNS  `mapstructure:"dns"`
-	K8S  K8S    `mapstructure:"k8s"`
-	ICMP []ICMP `mapstructure:"icmp"`
+var cfg Config
+
+func Read(filePath string) error {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(data, &cfg)
 }
 
-type HTTP struct {
-	Name              string        `mapstructure:"name"`
-	URL               string        `mapstructure:"url"`
-	RPS               float64       `mapstructure:"rps"`
-	Timeout           time.Duration `mapstructure:"timeout"`
-	TLSSkipVerify     bool          `mapstructure:"tls_skip_verify"`
-	DisableKeepAlives bool          `mapstructure:"disable_keepalives"`
-	H2cEnabled        bool          `mapstructure:"h2c_enabled"`
-	Host              string        `mapstructure:"host"`
-}
-
-type DNS struct {
-	Name       string        `mapstructure:"name"`
-	Domain     string        `mapstructure:"domain"`
-	RecordType string        `mapstructure:"record_type"`
-	RPS        float64       `mapstructure:"rps"`
-	ServerIP   string        `mapstructure:"server_ip"`
-	ServerPort int           `mapstructure:"server_port"`
-	Timeout    time.Duration `mapstructure:"timeout"`
-}
-
-type K8S struct {
-	Enabled     bool              `mapstructure:"enabled"`
-	SimpleProbe []K8S_SimpleProbe `mapstructure:"simple-probe"`
-}
-
-type K8S_SimpleProbe struct {
-	NameSpace string  `mapstructure:"namespace"`
-	RPS       float64 `mapstructure:"rps"`
-}
-type ICMP struct {
-	Name    string        `mapstructure:"name"`
-	Host    string        `mapstructure:"host"`
-	TTL     int           `mapstructure:"ttl"`
-	RPS     float64       `mapstructure:"rps"`
-	Timeout time.Duration `mapstructure:"timeout"`
+func Get() Config {
+	return cfg
 }

@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"net/http"
-
-	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	klog "k8s.io/klog/v2"
+	"k8s.io/klog/v2"
+	"net/http"
 
 	"gitlab.snapp.ir/snappcloud/health_exporter/config"
 	"gitlab.snapp.ir/snappcloud/health_exporter/prober"
@@ -21,65 +19,22 @@ func init() {
 }
 
 func main() {
-
 	err := config.Read(configPath)
-
 	if err != nil {
 		klog.Fatalf("Cannot read/parse config file: %v", err)
 	}
-
-	klog.Infof("Using config file '%s'\n", configPath)
+	klog.Infof("Using config file: %s", configPath)
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	for _, ht := range config.Get().Targets.HTTP {
-		httpProber := prober.NewHttp(ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify, ht.DisableKeepAlives, ht.H2cEnabled, ht.Host)
+	// Start all configured probers
+	prober.StartAll(ctx, config.Get().Targets)
 
-		klog.Infof("Probing HTTP target '%s' with url '%s', RPS: %.2f, timeout: %s, TLS_skip_verify: %v, disableKeepAlives: %v, h2cEnabled: %v ...\n",
-			ht.Name, ht.URL, ht.RPS, ht.Timeout, ht.TLSSkipVerify, ht.DisableKeepAlives, ht.H2cEnabled)
-		go httpProber.Start(ctx)
-	}
-
-	for _, d := range config.Get().Targets.DNS {
-		if d.ServerIP == "" {
-			config, _ := dns.ClientConfigFromFile("/etc/resolv.conf")
-			d.ServerIP = config.Servers[0]
-		}
-		if d.ServerPort == 0 {
-			d.ServerPort = 53
-		}
-		dnsProber := prober.NewDNS(d.Name, d.Domain, d.RecordType, d.RPS, d.ServerIP, d.ServerPort, d.Timeout)
-
-		klog.Infof("Probing DNS target '%s' with domain '%s', RecordType: %s, RPS: %.2f, server: %s, port: %v, timeout: %s ...\n",
-			d.Name, d.Domain, d.RecordType, d.RPS, d.ServerIP, d.ServerPort, d.Timeout)
-		go dnsProber.Start(ctx)
-	}
-	if config.Get().Targets.K8S.Enabled {
-		klog.Infof("K8S Prober is Enabled")
-		k8s_client := prober.Getk8sClient()
-		for _, sp := range config.Get().Targets.K8S.SimpleProbe {
-			k8s_simpeProber := prober.NewSimpleProbe(k8s_client, sp.NameSpace, sp.RPS)
-			klog.Infof("Probing K8S target namespace '%s', RPS: 1.0 ...\n",
-				sp.NameSpace)
-			go k8s_simpeProber.Start(ctx)
-		}
-	} else {
-		klog.Infof("K8S Prober is Disabled")
-	}
-	for _, i := range config.Get().Targets.ICMP {
-
-		icmpProber := prober.NewICMP(i.Name, i.Host, i.RPS, i.TTL, i.Timeout)
-		klog.Infof("Probing ICMP target '%s' with host '%s', RPS: %.2f, timeout: %s, ttl: %v\n",
-			i.Name, i.Host, i.RPS, i.Timeout, i.TTL)
-		go icmpProber.Start(ctx)
-
-	}
-
+	// Setup HTTP metrics handler
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
 
+	// Launch HTTP server with signal handling
 	startServer(config.Get().Listen, mux, cancel)
 }
