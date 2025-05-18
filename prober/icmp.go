@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-ping/ping"
+	"github.com/prometheus-community/pro-bing"
 	"gitlab.snapp.ir/snappcloud/health_exporter/metrics"
 	"k8s.io/klog/v2"
 )
@@ -35,7 +35,7 @@ func (i *Icmp) Start(ctx context.Context) {
 }
 
 func (i *Icmp) probe() {
-	pinger, err := ping.NewPinger(i.host)
+	pinger, err := probing.NewPinger(i.host)
 	if err != nil {
 		klog.Errorf("[ICMP] %s - cannot create pinger: %v", i.name, err)
 		return
