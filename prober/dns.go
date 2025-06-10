@@ -9,6 +9,7 @@ import (
 
 	"github.com/miekg/dns"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sony/gobreaker"
 	klog "k8s.io/klog/v2"
 )
 
@@ -28,18 +29,67 @@ var (
 		},
 		[]string{"name", "rcode", "rcode_value", "result", "domain", "server"},
 	)
+	dnsDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "dns_probe_duration_seconds",
+			Help:    "Duration of DNS probe in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"name", "domain", "record_type", "status"},
+	)
+
+	dnsErrors = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dns_probe_errors_total",
+			Help: "Total number of DNS probe errors",
+		},
+		[]string{"name", "domain", "record_type", "error_type"},
+	)
+
+	dnsCircuitBreakerState = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "dns_probe_circuit_breaker_state",
+			Help: "Current state of the circuit breaker (0: closed, 1: half-open, 2: open)",
+		},
+		[]string{"name", "domain"},
+	)
 )
 
 // TODO: it could be a bad practice!
 func init() {
 	prometheus.MustRegister(dnsRequests)
 	prometheus.MustRegister(dnsDurations)
+	prometheus.MustRegister(dnsDuration)
+	prometheus.MustRegister(dnsErrors)
+	prometheus.MustRegister(dnsCircuitBreakerState)
 }
 
 func NewDNS(name string, domain string, recordType string, rps float64, serverIP string, serverPort int, timeout time.Duration) DNS {
 	c := &dns.Client{
 		Timeout: timeout,
 	}
+
+	breaker := gobreaker.NewCircuitBreaker(gobreaker.Settings{
+		Name:        fmt.Sprintf("%s-%s", name, domain),
+		MaxRequests: 5,
+		Interval:    30 * time.Second,
+		Timeout:     60 * time.Second,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+			return counts.Requests >= 5 && failureRatio >= 0.6
+		},
+		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+			klog.Infof("Circuit breaker '%s' changed from %v to %v", name, from, to)
+			state := 0
+			switch to {
+			case gobreaker.StateHalfOpen:
+				state = 1
+			case gobreaker.StateOpen:
+				state = 2
+			}
+			dnsCircuitBreakerState.WithLabelValues(name, domain).Set(float64(state))
+		},
+	})
 
 	return DNS{
 		Name:       name,
@@ -49,6 +99,7 @@ func NewDNS(name string, domain string, recordType string, rps float64, serverIP
 		ServerIP:   serverIP,
 		ServerPort: serverPort,
 		Client:     c,
+		Breaker:    breaker,
 	}
 }
 
@@ -69,6 +120,7 @@ type DNS struct {
 	ServerPort int
 	Client     *dns.Client
 	ticker     *time.Ticker
+	Breaker    *gobreaker.CircuitBreaker
 }
 
 func (d *DNS) Start(ctx context.Context) {
@@ -121,7 +173,7 @@ func (d *DNS) sendRequest(ctx context.Context) DNSResult {
 	m.SetQuestion(dns.Fqdn(d.Domain), recordType)
 	m.RecursionDesired = true
 
-	r, rtt, err := d.Client.ExchangeContext(ctx, m, net.JoinHostPort(d.ServerIP, strconv.Itoa(d.ServerPort)))
+	_, rtt, err := d.Client.ExchangeContext(ctx, m, net.JoinHostPort(d.ServerIP, strconv.Itoa(d.ServerPort)))
 	ResponseTime := float64(rtt.Milliseconds()) / 1e3
 	if err != nil {
 		return DNSResult{
@@ -130,19 +182,19 @@ func (d *DNS) sendRequest(ctx context.Context) DNSResult {
 			Result:       d.errorType(err),
 			Error:        err,
 		}
-	} else if r.Rcode != dns.RcodeSuccess {
+	} else if rtt.Rcode != dns.RcodeSuccess {
 		return DNSResult{
 			ResponseTime: 0,
-			RCodeValue:   r.Rcode,
-			RCode:        dns.RcodeToString[r.Rcode],
+			RCodeValue:   rtt.Rcode,
+			RCode:        dns.RcodeToString[rtt.Rcode],
 			Result:       "error",
-			Error:        fmt.Errorf("invalid answer (%s) after %s query for %s", dns.RcodeToString[r.Rcode], d.RecordType, d.Domain),
+			Error:        fmt.Errorf("invalid answer (%s) after %s query for %s", dns.RcodeToString[rtt.Rcode], d.RecordType, d.Domain),
 		}
 	} else {
 		return DNSResult{
 			ResponseTime: ResponseTime,
-			RCodeValue:   r.Rcode,
-			RCode:        dns.RcodeToString[r.Rcode],
+			RCodeValue:   rtt.Rcode,
+			RCode:        dns.RcodeToString[rtt.Rcode],
 			Result:       "success",
 			Error:        err,
 		}

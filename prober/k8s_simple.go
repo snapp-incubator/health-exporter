@@ -5,6 +5,7 @@ package prober
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,67 +13,141 @@ import (
 	klog "k8s.io/klog/v2"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sony/gobreaker"
 )
 
 var (
-	podCount = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "health_k8s_pod_count",
-			Help: "The number of pods in namespace",
+	k8sDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "k8s_probe_duration_seconds",
+			Help:    "Duration of Kubernetes probe in seconds",
+			Buckets: prometheus.DefBuckets,
 		},
-		[]string{"namespace"},
+		[]string{"name", "namespace", "status"},
+	)
+
+	k8sErrors = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "k8s_probe_errors_total",
+			Help: "Total number of Kubernetes probe errors",
+		},
+		[]string{"name", "namespace", "error_type"},
+	)
+
+	k8sCircuitBreakerState = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "k8s_probe_circuit_breaker_state",
+			Help: "Current state of the circuit breaker (0: closed, 1: half-open, 2: open)",
+		},
+		[]string{"name", "namespace"},
+	)
+
+	k8sResourceCount = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "k8s_probe_resource_count",
+			Help: "Number of resources in the namespace",
+		},
+		[]string{"name", "namespace", "resource_type"},
 	)
 )
 
 // TODO: it could be a bad practice!
 func init() {
-	prometheus.MustRegister(podCount)
+	prometheus.MustRegister(k8sDuration)
+	prometheus.MustRegister(k8sErrors)
+	prometheus.MustRegister(k8sCircuitBreakerState)
+	prometheus.MustRegister(k8sResourceCount)
 }
 
-type SimpleProbe struct {
-	Client    *kubernetes.Clientset
-	NameSpace string
-	RPS       float64
-	ticker    *time.Ticker
+type K8SProber struct {
+	name      string
+	namespace string
+	rps       float64
+	client    *kubernetes.Clientset
+	breaker   *gobreaker.CircuitBreaker
 }
 
-func NewSimpleProbe(client *kubernetes.Clientset, namespace string, rps float64) SimpleProbe {
-	return SimpleProbe{
-		Client:    client,
-		NameSpace: namespace,
-		RPS:       rps,
+func NewSimpleProbe(client *kubernetes.Clientset, namespace string, rps float64) *K8SProber {
+	breaker := gobreaker.NewCircuitBreaker(gobreaker.Settings{
+		Name:        fmt.Sprintf("k8s-%s", namespace),
+		MaxRequests: 5,
+		Interval:    30 * time.Second,
+		Timeout:     60 * time.Second,
+		ReadyToTrip: func(counts gobreaker.Counts) bool {
+			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+			return counts.Requests >= 5 && failureRatio >= 0.6
+		},
+		OnStateChange: func(name string, from gobreaker.State, to gobreaker.State) {
+			klog.Infof("Circuit breaker '%s' changed from %v to %v", name, from, to)
+			state := 0
+			switch to {
+			case gobreaker.StateHalfOpen:
+				state = 1
+			case gobreaker.StateOpen:
+				state = 2
+			}
+			k8sCircuitBreakerState.WithLabelValues(name, namespace).Set(float64(state))
+		},
+	})
+
+	return &K8SProber{
+		name:      "k8s",
+		namespace: namespace,
+		rps:       rps,
+		client:    client,
+		breaker:   breaker,
 	}
 }
 
-func (sp *SimpleProbe) Start(ctx context.Context) {
-	sp.ticker = time.NewTicker(sp.calculateInterval())
-	defer sp.ticker.Stop()
+func (p *K8SProber) Start(ctx context.Context) {
+	ticker := time.NewTicker(time.Duration(float64(time.Second) / p.rps))
+	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			klog.Info("Context is done!")
 			return
-		case <-sp.ticker.C:
-			go (func() {
-				sp.GetPods(ctx)
-
-			})()
+		case <-ticker.C:
+			go p.probe(ctx)
 		}
 	}
 }
 
-func (sp *SimpleProbe) GetPods(ctx context.Context) {
-	pods, err := sp.Client.CoreV1().Pods(sp.NameSpace).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		klog.Warning(err)
-	}
-	pod_count := float64(len(pods.Items))
-	podCount.With(prometheus.Labels{
-		"namespace": sp.NameSpace,
-	}).Set(pod_count)
-}
+func (p *K8SProber) probe(ctx context.Context) {
+	start := time.Now()
 
-func (sp *SimpleProbe) calculateInterval() time.Duration {
-	return time.Duration(1000.0/sp.RPS) * time.Millisecond
+	_, err := p.breaker.Execute(func() (interface{}, error) {
+		// Get pods
+		pods, err := p.client.CoreV1().Pods(p.namespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list pods: %v", err)
+		}
+		k8sResourceCount.WithLabelValues(p.name, p.namespace, "pods").Set(float64(len(pods.Items)))
+
+		// Get services
+		services, err := p.client.CoreV1().Services(p.namespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list services: %v", err)
+		}
+		k8sResourceCount.WithLabelValues(p.name, p.namespace, "services").Set(float64(len(services.Items)))
+
+		// Get deployments
+		deployments, err := p.client.AppsV1().Deployments(p.namespace).List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to list deployments: %v", err)
+		}
+		k8sResourceCount.WithLabelValues(p.name, p.namespace, "deployments").Set(float64(len(deployments.Items)))
+
+		return nil, nil
+	})
+
+	duration := time.Since(start).Seconds()
+	status := "success"
+	if err != nil {
+		status = "error"
+		k8sErrors.WithLabelValues(p.name, p.namespace, "request_failed").Inc()
+		klog.Errorf("K8S probe failed for namespace %s: %v", p.namespace, err)
+	}
+
+	k8sDuration.WithLabelValues(p.name, p.namespace, status).Observe(duration)
 }

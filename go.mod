@@ -1,20 +1,20 @@
 module gitlab.snapp.ir/snappcloud/health_exporter
 
-go 1.21
-toolchain go1.22.4
+go 1.22
 
 require (
-	github.com/miekg/dns v1.1.61
-	github.com/prometheus/client_golang v1.19.1
-	github.com/spf13/viper v1.19.0
-	golang.org/x/net v0.26.0
-	golang.org/x/sys v0.21.0 // indirect
-	k8s.io/apimachinery v0.30.2
-	k8s.io/client-go v0.30.2
-	k8s.io/klog/v2 v2.130.1
+	github.com/miekg/dns v1.1.58
+	github.com/prometheus-community/pro-bing v0.7.0
+	github.com/prometheus/client_golang v1.18.0
+	github.com/spf13/viper v1.18.2
+	golang.org/x/net v0.21.0
+	golang.org/x/sys v0.17.0
+	k8s.io/apimachinery v0.29.2
+	k8s.io/client-go v0.29.2
+	k8s.io/klog/v2 v2.120.1
+	github.com/sony/gobreaker v0.5.0
+	github.com/hashicorp/go-multierror v1.1.1
 )
-
-require github.com/go-ping/ping v1.1.0
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
