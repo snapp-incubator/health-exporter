@@ -1,19 +1,16 @@
 module gitlab.snapp.ir/snappcloud/health_exporter
 
-go 1.22
+go 1.24.2
 
 require (
 	github.com/miekg/dns v1.1.58
 	github.com/prometheus-community/pro-bing v0.7.0
 	github.com/prometheus/client_golang v1.18.0
+	github.com/sony/gobreaker v0.5.0
 	github.com/spf13/viper v1.18.2
-	golang.org/x/net v0.21.0
-	golang.org/x/sys v0.17.0
-	k8s.io/apimachinery v0.29.2
+	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.29.2
 	k8s.io/klog/v2 v2.120.1
-	github.com/sony/gobreaker v0.5.0
-	github.com/hashicorp/go-multierror v1.1.1
 )
 
 require (
@@ -30,7 +27,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -54,10 +51,12 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
 	golang.org/x/mod v0.18.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/term v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/sync v0.13.0 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.22.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
