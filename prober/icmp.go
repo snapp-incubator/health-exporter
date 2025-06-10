@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/prometheus-community/pro-bing"
+	probing "github.com/prometheus-community/pro-bing"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker"
 	klog "k8s.io/klog/v2"
@@ -123,7 +123,7 @@ func (p *ICMPProber) probe(ctx context.Context) {
 	start := time.Now()
 
 	_, err := p.breaker.Execute(func() (interface{}, error) {
-		pinger, err := pro_bing.NewPinger(p.host)
+		pinger, err := probing.NewPinger(p.host)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create pinger: %v", err)
 		}

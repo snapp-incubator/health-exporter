@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptrace"
 	url2 "net/url"
-	"strconv"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
