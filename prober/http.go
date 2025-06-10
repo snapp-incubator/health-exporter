@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/http/httptrace"
-	url2 "net/url"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -16,30 +14,6 @@ import (
 )
 
 var (
-	httpRequests = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "health_http_requests_total",
-			Help: "The number of http requests",
-		},
-		[]string{"name", "status_code", "result", "url"},
-	)
-	httpDurations = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "health_http_duration_seconds",
-			Help:    "The response time of http requests",
-			Buckets: []float64{0.001, 0.005, 0.01, 0.02, 0.03, 0.05, 0.075, 0.1, 0.2, 0.5, 0.75, 1, 1.5, 2, 2.5, 3, 4, 5},
-		},
-		[]string{"name", "status_code", "result", "url"},
-	)
-	dnsLookupDurations = prometheus.NewHistogramVec(
-		prometheus.HistogramOpts{
-			Name:    "health_http_dns_lookup_time_seconds",
-			Help:    "The response time of dns lookup",
-			Buckets: []float64{0.0005, 0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.008, 0.01, 0.015, 0.02, 0.03, 0.05, 0.075, 0.1, 0.2, 0.5, 1},
-		},
-		[]string{"name", "status_code", "dns_error", "result", "url"},
-	)
-
 	httpDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "http_probe_duration_seconds",
@@ -66,17 +40,26 @@ var (
 	)
 )
 
-// TODO: it could be a bad practice!
 func init() {
-	prometheus.MustRegister(httpRequests)
-	prometheus.MustRegister(httpDurations)
-	prometheus.MustRegister(dnsLookupDurations)
 	prometheus.MustRegister(httpDuration)
 	prometheus.MustRegister(httpErrors)
 	prometheus.MustRegister(httpCircuitBreakerState)
 }
 
-func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSkipVerify, disableKeepAlives, h2cEnabled bool, host string) *HttpProber {
+type HttpProber struct {
+	name             string
+	url              string
+	rps              float64
+	timeout          time.Duration
+	tlsSkipVerify    bool
+	disableKeepAlive bool
+	h2cEnabled       bool
+	host             string
+	client           *http.Client
+	breaker          *gobreaker.CircuitBreaker
+}
+
+func NewHttp(name, url string, rps float64, timeout time.Duration, tlsSkipVerify, disableKeepAlive, h2cEnabled bool, host string) *HttpProber {
 	transport := &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   timeout,
@@ -86,7 +69,7 @@ func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSki
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-		DisableKeepAlives:     disableKeepAlives,
+		DisableKeepAlives:     disableKeepAlive,
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: tlsSkipVerify,
 		},
@@ -125,7 +108,7 @@ func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSki
 		rps:              rps,
 		timeout:          timeout,
 		tlsSkipVerify:    tlsSkipVerify,
-		disableKeepAlive: disableKeepAlives,
+		disableKeepAlive: disableKeepAlive,
 		h2cEnabled:       h2cEnabled,
 		host:             host,
 		client:           client,
@@ -133,30 +116,8 @@ func NewHttp(name string, url string, rps float64, timeout time.Duration, tlsSki
 	}
 }
 
-type HTTPResult struct {
-	ResponseTime  float64
-	StatusCode    int
-	Error         error
-	ErrorType     string
-	DNSLookupTime float64
-	DNSError      string
-}
-
-type HttpProber struct {
-	name             string
-	url              string
-	rps              float64
-	timeout          time.Duration
-	tlsSkipVerify    bool
-	disableKeepAlive bool
-	h2cEnabled       bool
-	host             string
-	client           *http.Client
-	breaker          *gobreaker.CircuitBreaker
-}
-
-func (h *HttpProber) Start(ctx context.Context) {
-	ticker := time.NewTicker(time.Duration(float64(time.Second) / h.rps))
+func (p *HttpProber) Start(ctx context.Context) {
+	ticker := time.NewTicker(time.Duration(float64(time.Second) / p.rps))
 	defer ticker.Stop()
 
 	for {
@@ -164,7 +125,7 @@ func (h *HttpProber) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			go h.probe(ctx)
+			go p.probe(ctx)
 		}
 	}
 }
@@ -206,73 +167,4 @@ func (p *HttpProber) probe(ctx context.Context) {
 	}
 
 	httpDuration.WithLabelValues(p.name, p.url, status).Observe(duration)
-}
-
-func (h *HttpProber) sendRequest(ctx context.Context) HTTPResult {
-	var startTime time.Time
-	var dnsStartTime time.Time
-	var dnsLookupTime float64
-	var dnsError string
-	var dnsHost string
-	httpTrace := &httptrace.ClientTrace{
-		DNSStart: func(info httptrace.DNSStartInfo) {
-			dnsHost = info.Host
-			dnsStartTime = time.Now()
-		},
-		DNSDone: func(info httptrace.DNSDoneInfo) {
-			dnsLookupTime = time.Since(dnsStartTime).Seconds()
-			if info.Err != nil {
-				klog.Infof("DNS Error for %v in %v seconds: %v ", dnsHost, dnsLookupTime, info.Err)
-				dnsError = info.Err.Error()
-			}
-		},
-	}
-
-	clientTraceCtx := httptrace.WithClientTrace(ctx, httpTrace)
-	req, _ := http.NewRequestWithContext(clientTraceCtx, http.MethodGet, h.url, nil)
-	if h.host != "" {
-		req.Host = h.host
-	}
-	startTime = time.Now()
-	res, err := h.client.Do(req)
-	responseTime := time.Since(startTime).Seconds()
-
-	if err != nil {
-		return HTTPResult{
-			ResponseTime:  responseTime,
-			Error:         err,
-			ErrorType:     h.errorType(err),
-			DNSLookupTime: dnsLookupTime,
-			DNSError:      dnsError,
-		}
-	}
-	defer res.Body.Close()
-	return HTTPResult{
-		StatusCode:    res.StatusCode,
-		ResponseTime:  responseTime,
-		DNSLookupTime: dnsLookupTime,
-		DNSError:      dnsError,
-	}
-}
-
-func (h *HttpProber) errorType(err error) string {
-	if timeoutError, ok := err.(net.Error); ok && timeoutError.Timeout() {
-		return "timeout"
-	}
-	urlErr, isUrlErr := err.(*url2.Error)
-	if !isUrlErr {
-		return "connection_failed"
-	}
-
-	opErr, isNetErr := (urlErr.Err).(*net.OpError)
-	if isNetErr {
-		switch (opErr.Err).(type) {
-		case *net.DNSError:
-			return "dns_error"
-		case *net.ParseError:
-			return "address_error"
-		}
-	}
-
-	return "connection_failed"
 }

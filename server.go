@@ -1,39 +1,19 @@
 package main
 
 import (
-	"context"
+	"fmt"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	klog "k8s.io/klog/v2"
 )
 
-func startServer(listen string, mux *http.ServeMux, cancel context.CancelFunc) {
-	srv := &http.Server{
-		Addr:    listen,
-		Handler: mux,
-	}
+func setupServer(port int) error {
+	http.Handle("/metrics", promhttp.Handler())
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		klog.Infof("Listening on port %s ...\n", listen)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			klog.Fatalf("listen:%+s\n", err)
-		}
-	}()
-
-	<-sigCh
-	cancel()
-
-	timeoutCtx, cancelTimeout := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancelTimeout()
-
-	if err := srv.Shutdown(timeoutCtx); err != nil {
-		klog.Infof("HTTP server Shutdown: %v", err)
-	}
+	klog.Infof("Starting HTTP server on port %d", port)
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
