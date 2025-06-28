@@ -1,64 +1,76 @@
 package config
 
 import (
-	"os"
+	"fmt"
+	"time"
 
-	"gopkg.in/yaml.v2"
+	"github.com/spf13/viper"
 )
 
-type Target struct {
-	HTTP []Http `yaml:"http"`
-	DNS  []Dns  `yaml:"dns"`
-	ICMP []Icmp `yaml:"icmp"`
-	K8S  K8s    `yaml:"k8s"`
+var config Config
+
+func Get() Config {
+	return config
 }
 
-type Http struct {
-	Name              string `yaml:"name"`
-	URL               string `yaml:"url"`
-	RPS               int    `yaml:"rps"`
-	Timeout           int    `yaml:"timeout"`
-	TLSSkipVerify     bool   `yaml:"tls_skip_verify"`
-	DisableKeepAlives bool   `yaml:"disable_keep_alives"`
-	H2cEnabled        bool   `yaml:"h2c_enabled"`
-	Host              string `yaml:"host"`
-}
+func Read(path string) error {
+	viper.SetConfigName(path)
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
 
-type Dns struct {
-	Name     string `yaml:"name"`
-	Server   string `yaml:"server"`
-	Domain   string `yaml:"domain"`
-	Interval int    `yaml:"interval"`
-}
+	if err != nil {
+		return fmt.Errorf("cannot read config file: %w", err)
+	}
 
-type Icmp struct {
-	Name     string `yaml:"name"`
-	Host     string `yaml:"host"`
-	Interval int    `yaml:"interval"`
-}
+	err = viper.Unmarshal(&config)
 
-type K8s struct {
-	Enabled       bool   `yaml:"enabled"`
-	Namespace     string `yaml:"namespace"`
-	LabelSelector string `yaml:"label_selector"`
-	Interval      int    `yaml:"interval"`
+	if err != nil {
+		return fmt.Errorf("cannot unmarshal config file: %w", err)
+	}
+
+	return nil
 }
 
 type Config struct {
-	Listen  string `yaml:"listen"`
-	Targets Target `yaml:"targets"`
+	Listen  string `mapstructure:"listen"`
+	Targets Target `mapstructure:"targets"`
 }
 
-var cfg Config
-
-func Read(filePath string) error {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-	return yaml.Unmarshal(data, &cfg)
+type Target struct {
+	HTTP []HTTP `mapstructure:"http"`
+	DNS  []DNS  `mapstructure:"dns"`
+	K8S  K8S    `mapstructure:"k8s"`
+	ICMP []ICMP `mapstructure:"icmp"`
 }
 
-func Get() Config {
-	return cfg
+type HTTP struct {
+	Name              string        `mapstructure:"name"`
+	URL               string        `mapstructure:"url"`
+	RPS               int           `mapstructure:"rps"`
+	Timeout           time.Duration `mapstructure:"timeout"`
+	TLSSkipVerify     bool          `mapstructure:"tls_skip_verify"`
+	DisableKeepAlives bool          `mapstructure:"disable_keepalives"`
+	H2cEnabled        bool          `mapstructure:"h2c_enabled"`
+	Host              string        `mapstructure:"host"`
+}
+
+type DNS struct {
+	Name     string `mapstructure:"name"`
+	Server   string `mapstructure:"server"`
+	Domain   string `mapstructure:"domain"`
+	Interval int    `mapstructure:"interval"`
+}
+
+type K8S struct {
+	Enabled       bool   `mapstructure:"enabled"`
+	Namespace     string `mapstructure:"namespace"`
+	LabelSelector string `mapstructure:"label_selector"`
+	Interval      int    `mapstructure:"interval"`
+}
+
+type ICMP struct {
+	Name     string `mapstructure:"name"`
+	Host     string `mapstructure:"host"`
+	Interval int    `mapstructure:"interval"`
 }

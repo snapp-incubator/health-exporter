@@ -14,7 +14,7 @@ type Http struct {
 	name              string
 	url               string
 	rps               int
-	timeout           int
+	timeout           time.Duration
 	tlsSkipVerify     bool
 	disableKeepAlives bool
 	h2cEnabled        bool
@@ -22,7 +22,7 @@ type Http struct {
 	client            *http.Client
 }
 
-func NewHttp(name, url string, rps, timeout int, tlsSkipVerify, disableKeepAlives, h2cEnabled bool, host string) *Http {
+func NewHttp(name, url string, rps int, timeout time.Duration, tlsSkipVerify, disableKeepAlives, h2cEnabled bool, host string) *Http {
 	transport := &http.Transport{
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: tlsSkipVerify}, // nolint: gosec
 		DisableKeepAlives: disableKeepAlives,
