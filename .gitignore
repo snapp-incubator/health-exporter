@@ -243,3 +243,5 @@ app
 config.yaml
 
 coverage.html
+.gopath/
+.gocache/
