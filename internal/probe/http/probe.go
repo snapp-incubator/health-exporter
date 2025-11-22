@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptrace"
@@ -127,7 +128,15 @@ func (p *Probe) performRequest(ctx context.Context) httpProbeStats {
 			dnsError:     dnsErr,
 		}
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_, copyErr := io.Copy(io.Discard, resp.Body)
+		if err := resp.Body.Close(); err != nil {
+			klog.V(4).Infof("close http response body failed: %v", err)
+		}
+		if copyErr != nil {
+			klog.V(4).Infof("drain http response body failed: %v", copyErr)
+		}
+	}()
 
 	return httpProbeStats{
 		statusCode:   resp.StatusCode,
