@@ -1,7 +1,7 @@
 # Health Exporter
 
-The Health Exporter continuously probes configured HTTP, DNS, ICMP, and Kubernetes targets and exposes Prometheus metrics that power the existing SLO/alerting rules.  
-Compared to scrape-on-demand approaches (e.g. blackbox-exporter) this dedicated process keeps issuing requests at configurable RPS so that aggregations such as error rates or latency percentiles are always fresh when Prometheus scrapes `/metrics`.
+Health Exporter continuously probes configured HTTP, DNS, ICMP, and Kubernetes targets across SnappCloud’s private regions and surfaces Prometheus metrics that describe endpoint reachability, pod health, and end-to-end network latency.  
+Compared to scrape-on-demand approaches (e.g. blackbox-exporter) this dedicated process keeps issuing requests at configurable RPS so that aggregations—error-rates, latency percentiles, and private-cloud service availability—are always fresh when Prometheus scrapes `/metrics`.
 
 ## Requirements
 
@@ -34,20 +34,20 @@ See [config.example.yaml](config.example.yaml) for the configuration format. Eac
 
 ## Metrics
 
-| Metric                                          | Notes
-|-------------------------------------------------|------------------------------------
-| `health_http_requests_total`                    | Classified result per HTTP probe
-| `health_http_duration_seconds_*`                | Latency histograms/counters for HTTP probes
-| `health_http_dns_lookup_time_seconds`           | DNS lookup durations for HTTP probes
-| `health_dns_requests_total`                     | DNS probe result counters
-| `health_dns_duration_seconds_*`                 | DNS probe latency histograms
-| `health_icmp_requests_total`                    | ICMP probe counters
-| `health_icmp_duration_seconds_*`                | ICMP probe latency histograms
-| `health_k8s_http_request_total`                 | Kubernetes client-go HTTP metrics
-| `health_k8s_http_request_duration_seconds`      | Kubernetes client-go latency summaries
-| `health_k8s_pod_count`                          | Gauge of pods per watched namespace
+All exported series map directly to probes that exercise private-cloud applications (public/private routers, inter-DC services, API servers, etc.) and the network planes that connect regions. They power alerting for both service health (HTTP success/error classification) and network latency (DNS lookup, TCP connect, ICMP).
 
-These are the exact series consumed by the provided `PrometheusRule`, so alert thresholds and dashboards do not need to change.
+| Metric                                          | Private cloud signal
+|-------------------------------------------------|------------------------------------
+| `health_http_requests_total`                    | Classified result per HTTP probe (private/public/edge routers, health-be endpoints)
+| `health_http_duration_seconds_*`                | Latency histograms/counters for HTTP probes showing service responsiveness
+| `health_http_dns_lookup_time_seconds`           | DNS lookup durations for HTTP probes, highlighting internal resolver slowness
+| `health_dns_requests_total`                     | DNS probe result counters for cluster and inter-region domains
+| `health_dns_duration_seconds_*`                 | DNS probe latency histograms for each resolver/IP
+| `health_icmp_requests_total`                    | ICMP probe counters for network hops between regions/edges
+| `health_icmp_duration_seconds_*`                | ICMP probe latency histograms capturing raw RTT between regions
+| `health_k8s_http_request_total`                 | Kubernetes client-go HTTP metrics for API servers inside each private cloud
+| `health_k8s_http_request_duration_seconds`      | Kubernetes API latency summaries
+| `health_k8s_pod_count`                          | Gauge of pods per watched namespace, proving workloads are scheduled
 
 ## Deployment
 
