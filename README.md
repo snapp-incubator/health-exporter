@@ -34,8 +34,6 @@ See [config.example.yaml](config.example.yaml) for the configuration format. Eac
 
 ## Metrics
 
-The exporter continues to expose the following metric families — labels and names remain unchanged to keep the existing Alertmanager/Prometheus rules working:
-
 | Metric                                          | Notes
 |-------------------------------------------------|------------------------------------
 | `health_http_requests_total`                    | Classified result per HTTP probe
