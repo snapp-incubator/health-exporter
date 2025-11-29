@@ -1,108 +1,63 @@
 # Health Exporter
 
-A prometheus exporter for continous health check of different endpoints.
+Health Exporter continuously probes configured HTTP, DNS, ICMP, and Kubernetes targets across SnappCloud’s private regions and surfaces Prometheus metrics that describe endpoint reachability, pod health, and end-to-end network latency.  
+Compared to scrape-on-demand approaches (e.g. blackbox-exporter) this dedicated process keeps issuing requests at configurable RPS so that aggregations—error-rates, latency percentiles, and private-cloud service availability—are always fresh when Prometheus scrapes `/metrics`.
 
-In comparision to blackbox-exporter which probes endpoints on each prometheus scrape, this exporter continuously probes the endpoints with configured RPS, so prometheus can scrape on a longer interval, and calculate success rate, latency avg or percentiles, with a much higher resolution. Also this can be used to health-check an endpoint with a high RPS synthetic load.
+## Requirements
 
+- Go **1.25.4** (see `go.mod`) or a matching container image
+- Access to the target network endpoints you want to probe
 
-## Build
+## Building
 
-### Docker
-
-`docker build -t health-exporter .`
-
-
-### Binary
+### Local binary
 
 ```bash
-git clone --depth 1 https://github.com/snapp-cab/health-exporter.git
+git clone https://github.com/snapp-cab/health-exporter.git
 cd health-exporter
-go build
+go build -o bin/health-exporter ./cmd/health-exporter
 ```
 
-## Installation
-
-
-### Docker
-
+### Docker image
 
 ```bash
-sudo docker run -p 8080:8080 -v ./config.yaml:/app/config.yaml:z docker.pkg.github.com/snapp/health-exporter/image:latest
+docker build -t health-exporter .
 ```
 
-### Helm chart
-
-* Prerequisites
-  * **Helm 3.0+** (Helm 2 is not supported)
-  * **Kubernetes 1.10+** - This is the earliest version of Kubernetes tested.
-    It is possible that this chart works with earlier versions but it is
-    untested.
-
-
-1. Add the SnappCab Helm Repository:
+## Running
 
 ```bash
-helm repo add snapp-cab https://snapp-cab.github.io/health-exporter/charts
-helm repo update
+./bin/health-exporter -config config.yaml
 ```
 
-2. Install with:
-
-```bash
-helm install health-exporter snapp-cab/health-exporter
-```
-
-### Binary releases
-
-```bash
-export VERSION=1.0.0
-wget https://github.com/cafebazaar/health-exporter/releases/download/v${VERSION}/health-exporter-${VERSION}.linux-amd64.tar.gz
-tar xvzf health-exporter-${VERSION}.linux-amd64.tar.gz health-exporter-${VERSION}.linux-amd64/health-exporter
-```
-
-## Usage
-
-Run health-exporter
-
-```bash
-health-exporter -config <PathToConfig>
-```
-
-See [example configuration file](config.example.yaml) for sample config file.
-
-Currently, health-exporter supports these probes:
-
-Name    | Description
---------|------------
-http    | For http(s) calls to different endpoints
-dns     | For dns requests to different DNS servers
-k8s     | For k8s-api health check
-
+See [config.example.yaml](config.example.yaml) for the configuration format. Each HTTP/DNS/ICMP probe declares a `name`, `url`/`domain`/`host`, requested `rps`, and timeout; optional fields let you toggle TLS verification, h2c, host headers, or DNS servers. Kubernetes probing is enabled via the `targets.k8s.enabled` flag and runs in-cluster using the service account.
 
 ## Metrics
 
+All exported series map directly to probes that exercise private-cloud applications (public/private routers, inter-DC services, API servers, etc.) and the network planes that connect regions. They power alerting for both service health (HTTP success/error classification) and network latency (DNS lookup, TCP connect, ICMP).
 
-| Metric                                          | Notes
+| Metric                                          | Private cloud signal
 |-------------------------------------------------|------------------------------------
-| health_http_requests_total                      | Total number of http requests
-| health_http_duration_seconds_count              | Total number of http requests
-| health_http_duration_seconds_sum                | Duration of http requests with response code
-| health_http_duration_seconds_bucket             | Count of http requests per bucket (for calculating percentile)
-| health_dns_requests_total                       | Total number of dns requests
-| health_dns_duration_seconds_count               | Total number of dns requests
-| health_dns_duration_seconds_sum                 | Duration of dns requests with response code
-| health_dns_duration_seconds_bucket              | Count of dns requests per bucket (for calculating percentile)
-| health_k8s_http_request_total                   | Total number of k8s api requests
-| health_k8s_http_request_duration_seconds_count  | Total number of k8s api requests
-| health_k8s_http_request_duration_seconds_sum    | Duration of k8s api requests with response code
-| health_k8s_pod_count                            | Number of pods (used as a health-check for api-server)
+| `health_http_requests_total`                    | Classified result per HTTP probe (private/public/edge routers, health-be endpoints)
+| `health_http_duration_seconds_*`                | Latency histograms/counters for HTTP probes showing service responsiveness
+| `health_http_dns_lookup_time_seconds`           | DNS lookup durations for HTTP probes, highlighting internal resolver slowness
+| `health_dns_requests_total`                     | DNS probe result counters for cluster and inter-region domains
+| `health_dns_duration_seconds_*`                 | DNS probe latency histograms for each resolver/IP
+| `health_icmp_requests_total`                    | ICMP probe counters for network hops between regions/edges
+| `health_icmp_duration_seconds_*`                | ICMP probe latency histograms capturing raw RTT between regions
+| `health_k8s_http_request_total`                 | Kubernetes client-go HTTP metrics for API servers inside each private cloud
+| `health_k8s_http_request_duration_seconds`      | Kubernetes API latency summaries
+| `health_k8s_pod_count`                          | Gauge of pods per watched namespace, proving workloads are scheduled
 
+## Deployment
+
+- **Docker**: `docker run -p 9876:9876 -v $PWD/config.yaml:/app/config.yaml health-exporter`
+- **Helm**: charts are available under `charts/health-exporter`
 
 ## Security
 
-### Reporting security vulnerabilities
-
-If you find a security vulnerability or any security related issues, please DO NOT file a public issue, instead send your report privately to cloud@snapp.cab. Security reports are greatly appreciated and we will publicly thank you for it.
+If you find a security vulnerability or any security related issues, please **do not** open a public issue.  
+Send an email to cloud@snapp.cab and we will work with you; responsible disclosures are appreciated and credited.
 
 ## License
 

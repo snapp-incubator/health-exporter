@@ -1,3 +1,5 @@
+BIN ?= bin/health-exporter
+
 fmt: ## Run go fmt against code.
 	go fmt ./...
 
@@ -7,23 +9,23 @@ vet: ## Run go vet against code.
 tidy:
 	go mod tidy
 
-test: fmt vet tidy # envtest ## Run tests.
+test: fmt vet tidy ## Run linters and tests.
 	golangci-lint run
 	go test ./... -covermode=atomic -coverprofile=coverage.out
 	go tool cover -html=coverage.out -o coverage.html
 
 ##@ Build
 
-build: test ## Build manager binary.
-	go build -race -o bin/main main.go
+build: test ## Build binary.
+	go build -o $(BIN) ./cmd/health-exporter
 
-run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+run: fmt vet ## Run the exporter locally.
+	go run ./cmd/health-exporter
 
-docker-build: test ## Build docker image with the manager.
+docker-build: test ## Build docker image with the exporter.
 	sudo podman build -t ${IMG} .
 
-docker-push: ## Push docker image with the manager.
+docker-push: ## Push docker image with the exporter.
 	sudo podman push ${IMG}
 
 docker-login:

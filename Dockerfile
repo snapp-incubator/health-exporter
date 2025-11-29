@@ -1,18 +1,17 @@
-#build stage
-FROM golang:1.21 AS builder
-RUN mkdir -p /go/src/app
-WORKDIR /go/src/app
+# build stage
+FROM golang:1.25.4 AS builder
+WORKDIR /workspace
 
-COPY go.sum go.mod /go/src/app/
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY . /go/src/app
-RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o health_exporter
+COPY . .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /workspace/health_exporter ./cmd/health-exporter
 
-#final stage
+# final stage
 FROM gcr.io/distroless/static
 WORKDIR /app
-COPY --from=builder /go/src/app/health_exporter /app/health_exporter
+COPY --from=builder /workspace/health_exporter /app/health_exporter
 CMD ["/app/health_exporter"]
 LABEL Name=health_exporter
 EXPOSE 9876
