@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/http2"
 	klog "k8s.io/klog/v2"
 
 	"gitlab.snapp.ir/snappcloud/health_exporter/internal/config"
@@ -203,12 +202,14 @@ func buildClient(target config.HTTPTarget) *http.Client {
 }
 
 func buildHTTP2Transport(target config.HTTPTarget) http.RoundTripper {
-	t := &http2.Transport{
-		AllowHTTP: true,
-		DialTLS: func(network, addr string, _ *tls.Config) (net.Conn, error) {
-			return net.Dial(network, addr)
-		},
-	}
+	// h2c (HTTP/2 with prior knowledge over cleartext) for http:// targets,
+	// regular HTTP/2 over TLS for https:// targets.
+	var protocols http.Protocols
+	protocols.SetUnencryptedHTTP2(true)
+	protocols.SetHTTP2(true)
+
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.Protocols = &protocols
 	if target.TLSSkipVerify {
 		t.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}

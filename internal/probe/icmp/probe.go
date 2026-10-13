@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-ping/ping"
+	ping "github.com/prometheus-community/pro-bing"
 	"github.com/prometheus/client_golang/prometheus"
 	klog "k8s.io/klog/v2"
 
@@ -83,7 +83,7 @@ func (p *Probe) sendRequest() icmpStats {
 	pinger.OnRecv = func(pkt *ping.Packet) {
 		result = icmpStats{
 			rtt: pkt.Rtt,
-			ttl: pkt.Ttl,
+			ttl: pkt.TTL,
 		}
 	}
 
